@@ -5,7 +5,8 @@
     "@capacitor/filesystem": "^7.1.9",
     "@capacitor/ios": "^7.0.0",
     "@capacitor/local-notifications": "^7.0.7",
-    "@capacitor/share": "^7.0.4"
+    "@capacitor/share": "^7.0.4",
+    "@revenuecat/purchases-capacitor": "^11.0.0"
   },
   "description": "Countdown VI — unofficial fan countdown to the Grand Theft Auto VI launch (Nov 19, 2026): live countdown, unlock-time checker, get-ready checklist, launch timeline, what-we-know guide, facts, and official news links.",
   "devDependencies": {
@@ -24,5 +25,5 @@
     "test": "node --test \"tests/*.test.mjs\""
   },
   "type": "module",
-  "version": "1.1.0"
+  "version": "1.2.0"
 }

@@ -2,14 +2,21 @@
 """Countdown VI — generate the app icon + splash images.
 
 The 1024x1024 AppIcon and the splash PNGs are binary, so they are NOT stored
-in the git repo (the GitHub push path is UTF-8 only). Run this on the Mac
-before the first Xcode build:
+in the git repo by the push path (the GitHub push path is UTF-8 only).
+They must be uploaded to the repo via the GitHub web UI (Add file →
+Upload files) into their asset-catalog directories. Codemagic builds
+from the repo, so a build without the PNGs in the repo produces a bundle
+with no app icon and App Store Connect rejects the upload (ITMS-90022 /
+ITMS-90023 / ITMS-90713 — seen on build #2, Nov 13, 2026).
+
+Run this locally to regenerate everything:
 
     pip install pillow numpy
     python3 tools/make-icons.py
 
 It writes:
-  - ios/App/App/Assets.xcassets/AppIcon.appiconset/AppIcon-512@2x.png
+  - ios/App/App/Assets.xcassets/AppIcon.appiconset/ — the full 18-size
+    icon set (iPhone + iPad + 1024 marketing) + Contents.json
   - ios/App/App/Assets.xcassets/Splash.imageset/splash-2732x2732*.png
   - store/icon-1024.png (the marketing icon for App Store Connect)
 
@@ -104,6 +111,63 @@ def make_splash(path: str):
     print("wrote", path)
 
 
+def icon_sizes():
+    """The full iOS AppIcon set: (idiom, size, scale, filename, pixels)."""
+    iphone = [
+        ("iphone", "20x20", "2x", "iphone-20@2x.png", 40),
+        ("iphone", "20x20", "3x", "iphone-20@3x.png", 60),
+        ("iphone", "29x29", "2x", "iphone-29@2x.png", 58),
+        ("iphone", "29x29", "3x", "iphone-29@3x.png", 87),
+        ("iphone", "40x40", "2x", "iphone-40@2x.png", 80),
+        ("iphone", "40x40", "3x", "iphone-40@3x.png", 120),
+        ("iphone", "60x60", "2x", "iphone-60@2x.png", 120),
+        ("iphone", "60x60", "3x", "iphone-60@3x.png", 180),
+    ]
+    ipad = [
+        ("ipad", "20x20", "1x", "ipad-20.png", 20),
+        ("ipad", "20x20", "2x", "ipad-20@2x.png", 40),
+        ("ipad", "29x29", "1x", "ipad-29.png", 29),
+        ("ipad", "29x29", "2x", "ipad-29@2x.png", 58),
+        ("ipad", "40x40", "1x", "ipad-40.png", 40),
+        ("ipad", "40x40", "2x", "ipad-40@2x.png", 80),
+        ("ipad", "76x76", "1x", "ipad-76.png", 76),
+        ("ipad", "76x76", "2x", "ipad-76@2x.png", 152),
+        ("ipad", "83.5x83.5", "2x", "ipad-83.5@2x.png", 167),
+    ]
+    marketing = [("ios-marketing", "1024x1024", "1x", "AppIcon-512@2x.png", 1024)]
+    return iphone + ipad + marketing
+
+
+def write_appicon_set(icon_dir: str, icon_1024_path: str):
+    """Downscale the 1024 master to every required size + Contents.json.
+
+    Added Nov 13, 2026: the first Codemagic upload failed (ITMS-90022 /
+    ITMS-90023 / ITMS-90713) because the icon set held ONLY the 1024
+    marketing icon — the bundle had no iPhone/iPad device icons. The PNGs
+    are binary and must be uploaded to the repo via the GitHub web UI
+    (the push path is UTF-8 text only); Contents.json goes via push-files.
+    """
+    import json
+
+    master = Image.open(icon_1024_path)
+    images = []
+    for idiom, size, scale, filename, px in icon_sizes():
+        if px == 1024:
+            # The master already lives at this path; just reference it.
+            pass
+        else:
+            resized = master.resize((px, px), Image.LANCZOS)
+            resized.save(os.path.join(icon_dir, filename), "PNG")
+        images.append(
+            {"filename": filename, "idiom": idiom, "scale": scale, "size": size}
+        )
+    contents = {"images": images, "info": {"author": "xcode", "version": 1}}
+    with open(os.path.join(icon_dir, "Contents.json"), "w") as f:
+        json.dump(contents, f, indent=2)
+        f.write("\n")
+    print(f"wrote {len(images)} AppIcon entries to {icon_dir}")
+
+
 def main():
     icon_dir = os.path.join(ROOT, "ios/App/App/Assets.xcassets/AppIcon.appiconset")
     splash_dir = os.path.join(ROOT, "ios/App/App/Assets.xcassets/Splash.imageset")
@@ -112,6 +176,7 @@ def main():
         os.makedirs(d, exist_ok=True)
     make_icon(os.path.join(icon_dir, "AppIcon-512@2x.png"))
     make_icon(os.path.join(store_dir, "icon-1024.png"))
+    write_appicon_set(icon_dir, os.path.join(store_dir, "icon-1024.png"))
     for name in ("splash-2732x2732.png", "splash-2732x2732-1.png", "splash-2732x2732-2.png"):
         make_splash(os.path.join(splash_dir, name))
     print("done — icon + splash images generated")

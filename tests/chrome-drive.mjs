@@ -247,6 +247,63 @@ try {
   assert.ok(png.length > 20000, `card PNG suspiciously small: ${png.length} bytes`);
   ok('share card renders and downloads as a 1080x1920 PNG');
 
+  // --- 7i. Launch Pass: no-key state — section renders, buy button disabled,
+  // no purchase attempt possible, IAP screenshot captured ---
+  const passText = (await page.$eval('#launch-pass', (el) => el.innerText)).replace(/\s+/g, ' ');
+  for (const needle of ['Launch Pass', '$1.99', 'One-time purchase', 'Founder badge', 'No ads, ever', 'available in the App Store version']) {
+    assert.ok(passText.includes(needle), `Launch Pass section missing: ${needle}`);
+  }
+  assert.equal(await page.$eval('#buy-pass-btn', (el) => el.disabled), true, 'buy button must be disabled without a RevenueCat key');
+  assert.equal(await page.$('#restore-pass-btn'), null, 'no restore button when the store is not ready');
+  assert.equal(await page.$('#founder-badge'), null, 'no Founder badge before a purchase');
+  // A disabled button cannot be clicked — assert the status line stays empty
+  // (no purchase attempt, no error) rather than trying to click it.
+  assert.equal(await page.$eval('#pass-status', (el) => el.textContent), '');
+  ok('Launch Pass renders in the no-key state with the buy button disabled');
+  // IAP review screenshot for App Store Connect: full 6.9" viewport shot
+  // with the section in view. App Store Connect rejected the earlier tight
+  // element crop (358x552) as the wrong dimensions — IAP review screenshots
+  // need a full device-size image (1290x2796). Note: in this preview the
+  // button is disabled (no RevenueCat key yet); the submitted build will
+  // have the key and an enabled button.
+  await page.setViewport({ width: 1290, height: 2796, isMobile: true, hasTouch: true, deviceScaleFactor: 1 });
+  await page.evaluate(() => document.getElementById('launch-pass').scrollIntoView());
+  await new Promise((r) => setTimeout(r, 300));
+  await page.screenshot({ path: `${ROOT}/store/iap-launchpass-screenshot.png` });
+  await page.setViewport({ width: 390, height: 844, isMobile: true, hasTouch: true });
+  const iapPng = fs.readFileSync(`${ROOT}/store/iap-launchpass-screenshot.png`);
+  assert.equal(iapPng.subarray(0, 8).toString('hex'), '89504e470d0a1a0a', 'IAP screenshot is not a PNG');
+  assert.equal(iapPng.readUInt32BE(16), 1290, 'IAP screenshot width must be 1290');
+  assert.equal(iapPng.readUInt32BE(20), 2796, 'IAP screenshot height must be 2796');
+  assert.ok(iapPng.length > 10000, `IAP screenshot suspiciously small: ${iapPng.length} bytes`);
+  ok('IAP screenshot saved to store/iap-launchpass-screenshot.png (1290x2796)');
+
+  // --- 7j. Launch Pass owner state (seeded cache, test-harness only): the
+  // Founder badge appears in the hero and About, and the section shows active ---
+  await page.evaluate(() => localStorage.setItem('cvi.launchpass', '1'));
+  await page.reload({ waitUntil: 'networkidle0' });
+  await page.waitForSelector('#cd-days');
+  const badge = await page.$eval('#founder-badge', (el) => el.innerText);
+  assert.match(badge, /Founder/i); // CSS uppercases the badge text
+  const passOwnedText = await page.$eval('#launch-pass', (el) => el.innerText);
+  assert.match(passOwnedText, /You[’']re a Founder/);
+  assert.equal(await page.$('#buy-pass-btn'), null, 'no buy button for an owner');
+  const aboutOwned = await page.$eval('#about', (el) => el.innerText);
+  assert.match(aboutOwned, /Founder — you have the Launch Pass/);
+  ok('seeded owner sees the Founder badge in the hero and About');
+  await page.evaluate(() => window.scrollTo(0, 0));
+  await new Promise((r) => setTimeout(r, 300));
+  await page.screenshot({ path: `${SHOTS}/14-hero-founder.png` });
+  await page.evaluate(() => document.getElementById('launch-pass').scrollIntoView());
+  await new Promise((r) => setTimeout(r, 300));
+  await page.screenshot({ path: `${SHOTS}/13-launchpass-owner.png` });
+  // Clear the seed so later steps run in the normal no-pass state.
+  await page.evaluate(() => localStorage.removeItem('cvi.launchpass'));
+  await page.reload({ waitUntil: 'networkidle0' });
+  await page.waitForSelector('#cd-days');
+  assert.equal(await page.$('#founder-badge'), null, 'Founder badge must clear with the seed');
+  ok('owner seed clears cleanly back to the no-pass state');
+
   // --- 8. Disclaimer present (About + footer) ---
   const about = await page.$eval('#about', (el) => el.innerText);
   assert.match(about, /Unofficial fan app\. Not affiliated with/);
@@ -254,11 +311,14 @@ try {
   assert.match(footer, /Unofficial fan app/);
   ok('disclaimer present in About and footer');
 
-  // --- 8b. About version line advertises no purchase (audit SHOULD-FIX-2) ---
+  // --- 8b. About version line advertises ONLY purchases that exist in v1.2
+  // (audit SHOULD-FIX-2, adapted: the $1.99 Launch Pass is real; the future
+  // v2 $2.99 remove-ads is not advertised anywhere) ---
   const versionLine = await page.$eval('#about .version', (el) => el.innerText);
-  assert.equal(versionLine, 'Version 1.1.0 · Free, no ads.');
+  assert.equal(versionLine, 'Version 1.2.0 · Free, no ads. Launch Pass ($1.99, one-time) available in-app — holders never see ads.');
   assert.ok(!about.includes('$2.99'), 'About must not advertise a purchase that does not exist');
-  ok('About version line is clean — no advertised purchase');
+  assert.ok(about.includes('$1.99'), 'About should mention the real Launch Pass purchase');
+  ok('About version line advertises only the real $1.99 Launch Pass');
 
   // --- 9. No placeholder text anywhere on the page ---
   const bodyText = await page.evaluate(() => document.body.innerText);
@@ -323,6 +383,9 @@ try {
   await page.evaluate(() => document.getElementById('world').scrollIntoView());
   await new Promise((r) => setTimeout(r, 300));
   await page.screenshot({ path: `${SHOTS}/11-world.png` });
+  await page.evaluate(() => document.getElementById('launch-pass').scrollIntoView());
+  await new Promise((r) => setTimeout(r, 300));
+  await page.screenshot({ path: `${SHOTS}/12-launchpass.png` });
   await page.goto(`${DIST}?now=2026-11-20T12:00:00`, { waitUntil: 'networkidle0' });
   await page.waitForSelector('.launched-title');
   await page.screenshot({ path: `${SHOTS}/07-launched.png` });

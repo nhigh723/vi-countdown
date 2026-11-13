@@ -1,17 +1,20 @@
-# QA checklist — Countdown VI v1.1
+# QA checklist — Countdown VI v1.2
 
 Verified Nov 13, 2026 on the production build (`npm run build` + `dist/`).
 Every item below was checked by a test, a real-browser drive, or a human
 eyeball of a screenshot — nothing is asserted on faith.
 
-v1.1 is the submission candidate (not v1.0): the get-ready checklist and
-the "What we know" guide materially strengthen the app against Apple's
-minimum-functionality rule, and the review-hardening fixes below are in.
+v1.1 is the submission candidate in review; v1.2 (this build) ships right
+behind it once the RevenueCat key is in, the Launch Pass product exists in
+App Store Connect, and the sandbox test has passed (see README "RevenueCat
+setup" — v1.2 does NOT submit before then). v1.2 also carries the four
+fixes from the independent v1.1 review audit (see "Review hardening
+(v1.2)").
 
-## Automated — unit tests (46/46 pass)
+## Automated — unit tests (73/73 pass)
 
-`npm test` — `tests/countdown.test.mjs` (20) + `tests/checklist.test.mjs` (16)
-+ `tests/features.test.mjs` (10)
+`npm test` — `tests/countdown.test.mjs` (22) + `tests/checklist.test.mjs` (16)
++ `tests/features.test.mjs` (10) + `tests/store.test.mjs` (25)
 
 - [x] Countdown math: 7 days out exactly; mixed remainder; 59 seconds rolls
       up; 23:59:59 is 23 hours, not a day
@@ -24,8 +27,30 @@ minimum-functionality rule, and the review-hardening fixes below are in.
       Nov 10 and physical Nov 12 both before launch; timeline in date order
       ending at launch; platforms are exactly PS5 + Xbox Series X|S (no PC);
       every news link is https to an official domain; every fact has a source
-- [x] Monetization: ads off, no purchase exists in v1.1; v2 remove-ads product
-      ID reserved and well-formed (`com.nickhigh.vicountdown.removeads`)
+- [x] SOURCES (audit SHOULD-FIX-3, NEW in v1.2): the facts-section lines each
+      have a source entry — "Game Pass" and "Ultimate Edition contents"
+      both exist in SOURCES
+- [x] Monetization: ads off, no purchase exists without a pass; Launch Pass
+      holders never see ads (`hasRemoveAds(true)` is true,
+      `shouldShowAds(true)` is false); v2 remove-ads product ID reserved
+      and well-formed (`com.nickhigh.vicountdown.removeads`)
+- [x] Launch Pass config (NEW in v1.2): product ID
+      `com.nickhigh.vicountdown.launchpass`, entitlement `launch_pass`,
+      name "Launch Pass", price "$1.99"; ships with the placeholder API
+      key, so the store is unconfigured
+- [x] Entitlement parsing (NEW in v1.2): accepts a bare CustomerInfo, the
+      `{ customerInfo }` wrapper, and a MakePurchaseResult shape; rejects
+      other entitlements, empty active maps, missing entitlements, and
+      non-objects — never throws
+- [x] Purchase-cancel detection (NEW in v1.2): RevenueCat code "1" /
+      `PURCHASE_CANCELLED_ERROR` and cancel messages read as a user cancel;
+      other failures (store problem, network, product not found) do not
+- [x] Entitlement cache (NEW in v1.2): defaults to not-owned; round-trips
+      true/false; any value but "1" reads as not-owned; never throws when
+      storage is unavailable
+- [x] No-key behavior (NEW in v1.2): the store is not ready before
+      configuration; purchase and restore both return "unavailable" and
+      never touch the store
 - [x] Checklist persistence: starts empty; loads stored ids; ignores unknown
       ids and non-string entries; corrupt JSON and non-array values start
       empty instead of crashing; save writes a sorted JSON array; save/load
@@ -54,9 +79,9 @@ minimum-functionality rule, and the review-hardening fixes below are in.
 - [x] Share-card numbers: days big with an hours/minutes sub-line;
       singular day/hour/minute; under a day, hours big with a
       minutes/seconds sub-line; after launch the card says the game is out
-- [x] Version: `APP_VERSION` is 1.1.0
+- [x] Version: `APP_VERSION` is 1.2.0
 
-## Automated — Chrome phone-size drive (24/24 pass, zero console errors)
+## Automated — Chrome phone-size drive (29/29 pass, zero console errors)
 
 `node tests/chrome-drive.mjs` — real Chromium at 390×844 (iPhone size),
 production build served from `file://`
@@ -89,7 +114,25 @@ production build served from `file://`
       matching the known UTC instants formatted in the browser's timezone
 - [x] Share card renders and downloads as a real 1080×1920 PNG (IHDR
       verified, 1.3 MB); the status line confirms "Card downloaded"
+- [x] Launch Pass renders in the no-key state (NEW in v1.2): the section
+      shows the name, $1.99, one-time wording, all three benefits, and the
+      "available in the App Store version" note; the buy button is
+      disabled; there is no restore button and no Founder badge; the
+      status line stays empty (no purchase attempt, no error)
+- [x] IAP screenshot saved (NEW in v1.2): `store/iap-launchpass-screenshot.png`
+      is a real PNG of the Launch Pass section, for the App Store Connect
+      IAP review
+- [x] Launch Pass owner state (NEW in v1.2, seeded cache — test-harness
+      only): the Founder badge appears in the hero and in About, the
+      section shows "You're a Founder — your Launch Pass is active", and
+      the buy button is gone; clearing the seed returns cleanly to the
+      no-pass state
 - [x] Disclaimer present in About and footer
+- [x] About version line advertises ONLY the real purchase (NEW in v1.2,
+      audit SHOULD-FIX-2): "Version 1.2.0 · Free, no ads. Launch Pass
+      ($1.99, one-time) available in-app — holders never see ads." — no
+      "$2.99" anywhere in About (the future v2 remove-ads is not
+      advertised until it exists)
 - [x] No placeholder text anywhere (no lorem / TODO / placeholder)
 - [x] Post-launch state flips correctly (`?now=2026-11-20`): "IT'S OUT NOW",
       both store buttons, "checklist is coming soon", and the get-ready
@@ -119,6 +162,18 @@ production build served from `file://`
       disabled and greyed, world-times list starting below
 - [x] 11-world (NEW): "Who plays first?" — 8 ranked cities, Auckland #1
       highlighted pink, correct local labels, no overflow
+- [x] 12-launchpass (NEW in v1.2): Launch Pass section — title, subtitle,
+      three benefits, price line, disabled buy button, "App Store version"
+      note; clean layout, no overflow
+- [x] 13-launchpass-owner (NEW in v1.2): owner state — "You're a Founder —
+      your Launch Pass is active" in teal, benefits, thank-you note, no
+      buy button
+- [x] 14-hero-founder (NEW in v1.2): Founder badge pill ("★ FOUNDER —
+      LAUNCH PASS") sitting cleanly between "UNTIL LAUNCH" and the
+      countdown tiles
+- [x] IAP screenshot (NEW in v1.2, `store/iap-launchpass-screenshot.png`):
+      tight crop of the Launch Pass section — title, benefits, price,
+      button, note; readable, no clipping
 - [x] Share card PNG (NEW, downloaded by the drive): 1080×1920, gradient
       border, COUNTDOWN VI wordmark, big "5 DAYS", teal sub-line, launch
       date, "Get Countdown VI on the App Store", "Unofficial fan app" —
@@ -150,12 +205,50 @@ production build served from `file://`
       Ike, Dre'Quan Priest, Real Dimez, Raul Bautista, Brian Heder); no
       voice cast announced; free printable Leonida map on Rockstar's site
       from Nov 19 (announced Nov 3)
+- [x] NEW (v1.2, audit SHOULD-FIX-3, verified Nov 13): Ultimate Edition
+      contents — exclusive vehicles, weapons, apparel and more for Jason
+      and Lucia (Rockstar / Xbox News Nov 10, 2026, PlayStation Store);
+      Game Pass — no announcement at launch, Xbox Store sells a paid
+      pre-order, Take-Two's CEO has publicly objected to day-one
+      subscription launches (checked Nov 13, 2026)
 - [x] Left out on purpose: no map size (Rockstar has published none — every
       figure is a community estimate), no Vice City district list (leak /
       datamine territory), no voice actors (none announced), no leaked-map
       claims of any kind
 - [x] No Nov 18 date anywhere (some regional Xbox pages show it as a
       timezone quirk; the official date is Nov 19)
+
+## Review hardening (v1.2)
+
+All four fixes from the independent v1.1 review audit (see
+`~/workspace/gta-companion/REVIEW-AUDIT.md`) are carried into v1.2:
+
+- [x] SHOULD-FIX-2 (footer): the About version line advertises ONLY
+      purchases that exist in v1.2 — the $1.99 Launch Pass. The "$2.99
+      remove-ads arrives with v2" sentence is gone; the future v2
+      remove-ads is not advertised anywhere in the app. Drive step 8b
+      asserts the exact version line and that About contains no "$2.99".
+- [x] SHOULD-FIX-3 (sources): SOURCES now has "Ultimate Edition contents"
+      and "Game Pass" entries (exact wording copied from the v1.1 fix);
+      the unit test asserts both labels exist.
+- [x] SHOULD-FIX-1 (privacy): `privacy.html` carries the v1.1 wording
+      verbatim — "three small settings" (console, checklist ticks,
+      reminder toggle) plus the share-card cache PNG line — with the
+      RevenueCat disclosure added on top (see below), not replacing it.
+- [x] N1 (QA hooks): the `?now=` / `?platform=` hooks are kept — the
+      chrome drive depends on `?now=`; they are unreachable in production.
+- [x] Privacy policy updated for v1.2: a new "In-app purchases (Launch
+      Pass)" section discloses RevenueCat as the purchase processor
+      (purchase records + device identifiers, link to RevenueCat's privacy
+      policy) and that payment is handled entirely by Apple; the "Data we
+      collect" section is qualified (nothing to any server except the
+      optional purchase); the pass entitlement cache is disclosed as an
+      on-device mirror. **Flag: the App Store Connect "Data Not Collected"
+      declaration from v1.1 must be UPDATED for v1.2** (parent's job).
+- [x] Listing updated for v1.2: description gains the Launch Pass section,
+      What's New v1.2 mentions it, the "Offers In-App Purchases" note and
+      IAP product details are documented, and the Privacy section flags the
+      declaration update.
 
 ## Review hardening (v1.1)
 
@@ -185,58 +278,28 @@ production build served from `file://`
 - [x] Disclaimer in the app (About + footer) and in the listing copy
 - [x] News hub is links only — no copied articles, no scraping
 
-## Codemagic (v1.1)
+## Codemagic (v1.2)
 
 - [x] `codemagic.yaml` staged in the project root: mac_mini_m2, node 20,
       xcode latest, app_store_connect integration "codemagic",
       ios_signing_key group, automatic code signing, build-number bump from
       TestFlight, IPA build, `submit_to_testflight: true`,
       `submit_to_app_store: false`; BUNDLE_ID `com.nickhigh.vicountdown`;
-      APP_STORE_APPLE_ID is the 0000000000 placeholder — the App Store
-      Connect app record does not exist yet, so the build cannot run until
-      it is created and the Apple ID is filled in
-- [ ] NOT run: no Codemagic build has been triggered (needs the app record +
-      the Codemagic hookup — parent's job, not this build's)
-
-## Audit fixes (Nov 13, ~00:40 — independent review audit, REVIEW-AUDIT.md)
-
-The adversarial audit found 1 blocker + 3 should-fixes. All four are fixed
-in this commit; the age-rating blocker is fixed in App Store Connect
-(questionnaire re-answered → 12+), not in code.
-
-- **SHOULD-FIX-2 (footer):** the About version line no longer advertises
-  the $2.99 remove-ads option ("Version 1.1.0 · Free, no ads."). The
-  reserved product ID/constants stay in `monetization.ts` (not
-  user-visible) for v2. Regression test: drive step 21 asserts the exact
-  version line and that About contains no "$2.99".
-- **SHOULD-FIX-3 (sources):** two SOURCES entries added — "Ultimate
-  Edition contents" (Rockstar / Xbox News Nov 10, 2026, PlayStation
-  Store) and "Game Pass" (Xbox Store paid pre-order; Take-Two CEO's
-  day-one-subscription objection). Both facts were verified true by the
-  auditor; this closes the citation gap behind the "every line traces
-  to a source" claim. Regression test: unit test asserts both labels
-  exist in SOURCES.
-- **SHOULD-FIX-1 (privacy policy):** "two small settings" → "three
-  small settings" (console, checklist ticks, reminder toggle) + a line
-  that the share card writes a temporary PNG to the device cache.
-  `privacy.html` is pushed to the preview (main) with this change; the
-  URL in App Store Connect is unchanged.
-- **N1 (QA hooks) — KEPT deliberately:** the `?now=` / `?platform=`
-  overrides are unreachable in production (no URL bar in WKWebView),
-  and the chrome drive depends on `?now=` for the pre-preload and
-  post-launch states. Stripping them would break QA for zero review
-  benefit.
-- **Drive fix:** the world-times step now strips the " You" badge from
-  city names before comparing (the badge is a feature — exactly one
-  city carries it, now asserted), after the step failed when the VM
-  timezone made New York the user city.
-
-**New counts after these fixes: 47/47 unit tests, 25/25 chrome-drive
-steps, zero console errors.** About screenshot re-eyeballed (new source
-entries render; version line verified by drive assertion).
+      APP_STORE_APPLE_ID is 6834272574 (the v1.1 app record already exists)
+- [ ] NOT run: no v1.2 Codemagic build has been triggered (parent's job,
+      not this build's)
 
 ## Not verified (honest gaps)
 
+- [ ] **Launch Pass sandbox test (v1.2's biggest gap):** no real purchase,
+      restore, or cancel has ever run — the VM has no App Store sandbox,
+      the RevenueCat key is still the placeholder, and the IAP product does
+      not exist in App Store Connect yet. The sandbox checklist in README
+      ("RevenueCat setup") must pass on a real iPhone with a TestFlight
+      build before v1.2 submits: buy (badge appears immediately), relaunch
+      (badge persists), delete + reinstall + restore, cancel at the Apple
+      sheet (no badge, no error, no crash), buy with no network (plain
+      error, no crash).
 - [ ] **Real iPhone test:** the app has been driven in desktop Chromium at
       phone size, not on a physical iPhone or the iOS Simulator. Nick's
       Mac-mini Simulator run (README step 8) and his phone test of the
@@ -251,7 +314,7 @@ entries render; version line verified by drive assertion).
       been compiled by Xcode. `npx cap add ios` generated the project
       cleanly; `pod install` was skipped (no CocoaPods here) and must run
       on the Mac via `npx cap sync ios` (or on Codemagic). The Podfile now
-      lists the three v1.1 plugin pods (Filesystem, LocalNotifications,
-      Share), so `pod install` will pick them up.
+      lists the v1.2 plugin pods (Filesystem, LocalNotifications, Share,
+      RevenueCat Purchases), so `pod install` will pick them up.
 - [ ] **App Review outcome:** the "VI" trademark residual risk is documented
       in the README; a rename fallback exists if Review objects.

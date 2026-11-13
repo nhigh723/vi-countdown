@@ -1,6 +1,7 @@
-// Countdown VI v1.1 — countdown + unlock checker + get-ready checklist +
+// Countdown VI v1.2 — countdown + unlock checker + get-ready checklist +
 // launch-night reminder + world unlock times + launch timeline +
-// what-we-know guide + facts + news links + shareable countdown card.
+// what-we-know guide + facts + news links + shareable countdown card +
+// Launch Pass ($1.99 one-time in-app purchase via RevenueCat).
 // Single scroll page. All facts come from config.ts (verified public sources).
 // QA hook (documented in README): ?now=ISO overrides the clock, e.g.
 // ?now=2026-11-20T12:00:00 drives the post-launch state.
@@ -15,6 +16,8 @@ import {
   GUIDE_SECTIONS,
   LAUNCH_LABEL,
   LAUNCH_LOCAL,
+  LAUNCH_PASS_NAME,
+  LAUNCH_PASS_PRICE_LABEL,
   NEWS_LINKS,
   PHYSICAL_START_LOCAL,
   PLATFORMS,
@@ -43,6 +46,13 @@ import {
 } from './reminder';
 import { getWorldUnlockTimes } from './world-times';
 import { shareCountdownCard } from './share-card';
+import {
+  initStore,
+  isStoreReady,
+  loadLaunchPassOwned,
+  purchaseLaunchPass,
+  restoreLaunchPass,
+} from './store';
 
 const PLATFORM_KEY = 'cvi.platform';
 
@@ -91,16 +101,22 @@ function esc(s: string): string {
     .replace(/"/g, '&quot;');
 }
 
-function renderHero(now: Date): string {
+function renderHero(now: Date, passOwned: boolean): string {
   const cd = getCountdown(LAUNCH_LOCAL, now);
   const preloadOpen = now.getTime() >= PRELOAD_START_LOCAL.getTime();
   const pill = preloadOpen
     ? '<span class="pill pill-live"><span class="dot"></span>Pre-load is open now</span>'
     : '<span class="pill">Pre-load opens Nov 10</span>';
+  // The Founder badge is the Launch Pass's immediate deliverable — visible
+  // the moment the purchase completes, in both hero states.
+  const founder = passOwned
+    ? '<p class="founder-badge" id="founder-badge" aria-label="Launch Pass Founder">★ Founder — Launch Pass</p>'
+    : '';
   if (cd.launched) {
     return `
     <section class="hero hero-launched" id="hero">
       <p class="hero-kicker">LAUNCH DAY HAS ARRIVED</p>
+      ${founder}
       <h1 class="launched-title">IT&rsquo;S OUT NOW</h1>
       <p class="hero-date">Grand Theft Auto VI is out now on PlayStation 5 and Xbox Series X|S.</p>
       <div class="hero-actions">
@@ -113,6 +129,7 @@ function renderHero(now: Date): string {
   return `
   <section class="hero" id="hero">
     <p class="hero-kicker">UNTIL LAUNCH</p>
+    ${founder}
     <div class="countdown" role="timer" aria-label="Time until launch">
       <div class="cd-tile"><span class="cd-num" id="cd-days">${cd.days}</span><span class="cd-label">Days</span></div>
       <div class="cd-tile"><span class="cd-num" id="cd-hours">${pad2(cd.hours)}</span><span class="cd-label">Hours</span></div>
@@ -125,6 +142,49 @@ function renderHero(now: Date): string {
       <button type="button" class="btn btn-ghost" id="share-btn">Share countdown ↗</button>
       <p class="share-status" id="share-status" aria-live="polite"></p>
     </div>
+  </section>`;
+}
+
+function renderLaunchPass(passOwned: boolean, storeReady: boolean): string {
+  // Honest copy, no scarcity tricks: the pass is a one-time $1.99 purchase.
+  // The v2 100% checklist update itself is free for everyone — what the pass
+  // buys at launch is the full checklist experience ad-free, with nothing
+  // else to buy. The Founder badge is the immediate deliverable: it appears
+  // the moment the purchase completes (see renderHero).
+  const benefits = `
+    <ul class="fact-list">
+      <li><strong>Founder badge — today.</strong> A Founder badge on your countdown and in About.</li>
+      <li><strong>The full checklist experience at launch.</strong> When the v2 100% checklist ships (missions, collectibles), yours is ad-free — no ads, nothing else to buy.</li>
+      <li><strong>No ads, ever.</strong> When ads arrive in v2, you never see them.</li>
+    </ul>`;
+  if (passOwned) {
+    return `
+  <section class="card card-highlight" id="launch-pass">
+    <h2>${esc(LAUNCH_PASS_NAME)}</h2>
+    <p class="pass-active" id="pass-status" aria-live="polite">★ You&rsquo;re a Founder — your ${esc(LAUNCH_PASS_NAME)} is active.</p>
+    ${benefits}
+    <p class="pass-note">Your 100% checklist unlocks ad-free the moment v2 ships. Thanks for supporting the app.</p>
+  </section>`;
+  }
+  const buyButton = storeReady
+    ? `<button type="button" class="btn btn-primary btn-block" id="buy-pass-btn">Get the ${esc(LAUNCH_PASS_NAME)} — ${esc(LAUNCH_PASS_PRICE_LABEL)}</button>`
+    : `<button type="button" class="btn btn-primary btn-block" id="buy-pass-btn" disabled aria-disabled="true">Get the ${esc(LAUNCH_PASS_NAME)} — ${esc(LAUNCH_PASS_PRICE_LABEL)}</button>`;
+  const restoreButton = storeReady
+    ? `<button type="button" class="btn btn-ghost btn-block" id="restore-pass-btn">Restore Purchases</button>`
+    : '';
+  const note = storeReady
+    ? ''
+    : '<p class="pass-note">Purchases are available in the App Store version of the app — this preview can&rsquo;t take payments.</p>';
+  return `
+  <section class="card card-highlight" id="launch-pass">
+    <h2>${esc(LAUNCH_PASS_NAME)}</h2>
+    <p class="section-sub">One-time purchase. Support the app and lock in the full launch experience.</p>
+    ${benefits}
+    <p class="pass-price">One-time purchase — ${esc(LAUNCH_PASS_PRICE_LABEL)}. No subscription, no renewals.</p>
+    ${buyButton}
+    ${restoreButton}
+    ${note}
+    <p class="pass-status" id="pass-status" aria-live="polite"></p>
   </section>`;
 }
 
@@ -333,21 +393,25 @@ function renderNews(): string {
   </section>`;
 }
 
-function renderAbout(): string {
+function renderAbout(passOwned: boolean): string {
   const sources = SOURCES.map((s) => `<li><strong>${esc(s.label)}:</strong> ${esc(s.detail)}</li>`).join('');
+  const founderLine = passOwned
+    ? `<p class="founder-line">★ Founder — you have the ${esc(LAUNCH_PASS_NAME)}. Your 100% checklist is ad-free the moment v2 ships, and you&rsquo;ll never see ads.</p>`
+    : '';
   return `
   <section class="card" id="about">
     <h2>About</h2>
     <p class="disclaimer">${esc(DISCLAIMER)}</p>
     <p>${esc(APP_NAME)} is a fan-made countdown. It collects no data, has no account, and works offline — the countdown, timeline, and facts all live inside the app. News links open the official sites in your browser.</p>
+    ${founderLine}
     <h3>Where every fact comes from</h3>
     <ul class="fact-list sources-list">${sources}</ul>
-    <p class="version">Version ${esc(APP_VERSION)} · Free, no ads.</p>
+    <p class="version">Version ${esc(APP_VERSION)} · Free, no ads. ${esc(LAUNCH_PASS_NAME)} (${esc(LAUNCH_PASS_PRICE_LABEL)}, one-time) available in-app — holders never see ads.</p>
     <p><a href="./privacy.html">Privacy policy</a></p>
   </section>`;
 }
 
-function renderApp(now: Date, platform: PlatformInfo, checked: ReadonlySet<string>, reminderOn: boolean): string {
+function renderApp(now: Date, platform: PlatformInfo, checked: ReadonlySet<string>, reminderOn: boolean, passOwned: boolean, storeReady: boolean): string {
   const launched = now.getTime() >= LAUNCH_LOCAL.getTime();
   return `
   <header class="app-header">
@@ -355,7 +419,8 @@ function renderApp(now: Date, platform: PlatformInfo, checked: ReadonlySet<strin
     <p class="tagline">Unofficial fan companion</p>
   </header>
   <main>
-    ${renderHero(now)}
+    ${renderHero(now, passOwned)}
+    ${renderLaunchPass(passOwned, storeReady)}
     ${renderUnlock(platform, now)}
     ${launched ? '' : renderChecklist(now, checked)}
     ${launched ? '' : renderReminder(now, reminderOn)}
@@ -365,7 +430,7 @@ function renderApp(now: Date, platform: PlatformInfo, checked: ReadonlySet<strin
     ${renderFacts()}
     ${renderChecklistTeaser(now)}
     ${renderNews()}
-    ${renderAbout()}
+    ${renderAbout(passOwned)}
   </main>
   <footer class="app-footer"><p>${esc(DISCLAIMER)}</p></footer>`;
 }
@@ -392,8 +457,86 @@ function start(): void {
   let platform = platformById(loadPlatform());
   let checked = loadChecked(window.localStorage);
   let reminderOn = loadReminderOn(window.localStorage);
+  let passOwned = loadLaunchPassOwned(window.localStorage);
+  let storeReady = false;
   let wasLaunched = getNow().getTime() >= LAUNCH_LOCAL.getTime();
-  root.innerHTML = renderApp(getNow(), platform, checked, reminderOn);
+  root.innerHTML = renderApp(getNow(), platform, checked, reminderOn, passOwned, storeReady);
+
+  // Async store init (device only, real key only): refreshes the
+  // entitlement cache from RevenueCat, then re-renders if the pass state
+  // or store readiness changed. On the web preview this returns
+  // immediately with no change, so no re-render happens.
+  void initStore(window.localStorage).then(() => {
+    const freshOwned = loadLaunchPassOwned(window.localStorage);
+    const freshReady = isStoreReady();
+    if (freshOwned !== passOwned || freshReady !== storeReady) {
+      passOwned = freshOwned;
+      storeReady = freshReady;
+      root.innerHTML = renderApp(getNow(), platform, checked, reminderOn, passOwned, storeReady);
+    }
+  });
+
+  /** Re-renders the whole app after a pass state change (purchase/restore),
+   *  then puts a status message into the fresh Launch Pass section. A full
+   *  re-render is the same pattern the launch-flip uses — the countdown
+   *  interval re-queries its tiles by id, and checklist state lives in
+   *  memory, so nothing is lost. */
+  const rerenderWithPassStatus = (message: string): void => {
+    root.innerHTML = renderApp(getNow(), platform, checked, reminderOn, passOwned, storeReady);
+    const status = document.getElementById('pass-status');
+    if (status) status.textContent = message;
+  };
+
+  async function handleBuyPass(): Promise<void> {
+    const status = document.getElementById('pass-status');
+    const btn = document.getElementById('buy-pass-btn') as HTMLButtonElement | null;
+    if (!isStoreReady()) {
+      // Safety net: the button is disabled when the store isn't ready.
+      if (status) status.textContent = 'Purchases are available in the App Store version of the app.';
+      return;
+    }
+    if (btn) btn.setAttribute('disabled', 'true');
+    if (status) status.textContent = 'Contacting the App Store…';
+    const outcome = await purchaseLaunchPass(window.localStorage);
+    if (outcome === 'purchased') {
+      passOwned = true;
+      rerenderWithPassStatus('Welcome, Founder — your Launch Pass is active.');
+      return;
+    }
+    if (btn) btn.removeAttribute('disabled');
+    if (!status) return;
+    status.textContent =
+      outcome === 'cancelled'
+        ? ''
+        : outcome === 'unavailable'
+          ? 'Purchases aren\u2019t available right now. Please try again later.'
+          : 'The purchase didn\u2019t complete. If you were charged, tap Restore Purchases to unlock your pass.';
+  }
+
+  async function handleRestorePass(): Promise<void> {
+    const status = document.getElementById('pass-status');
+    const btn = document.getElementById('restore-pass-btn') as HTMLButtonElement | null;
+    if (!isStoreReady()) {
+      if (status) status.textContent = 'Purchases are available in the App Store version of the app.';
+      return;
+    }
+    if (btn) btn.setAttribute('disabled', 'true');
+    if (status) status.textContent = 'Checking your purchases…';
+    const outcome = await restoreLaunchPass(window.localStorage);
+    if (outcome === 'restored') {
+      passOwned = true;
+      rerenderWithPassStatus('Welcome back, Founder — your Launch Pass is active.');
+      return;
+    }
+    if (btn) btn.removeAttribute('disabled');
+    if (!status) return;
+    status.textContent =
+      outcome === 'nothing-to-restore'
+        ? 'No Launch Pass found on this Apple ID. If you bought it with a different Apple ID, sign in with that one in Settings and try again.'
+        : outcome === 'unavailable'
+          ? 'Purchases aren\u2019t available right now. Please try again later.'
+          : 'Couldn\u2019t check your purchases. Check your connection and try again.';
+  }
 
   async function handleShare(): Promise<void> {
     const status = document.getElementById('share-status');
@@ -478,6 +621,14 @@ function start(): void {
       void handleShare();
       return;
     }
+    if (target?.closest?.('#buy-pass-btn')) {
+      void handleBuyPass();
+      return;
+    }
+    if (target?.closest?.('#restore-pass-btn')) {
+      void handleRestorePass();
+      return;
+    }
     const btn = target?.closest?.('[data-platform]') as HTMLElement | null;
     if (!btn) return;
     const id = btn.getAttribute('data-platform');
@@ -515,7 +666,7 @@ function start(): void {
     const launched = now.getTime() >= LAUNCH_LOCAL.getTime();
     if (launched !== wasLaunched) {
       wasLaunched = launched;
-      root.innerHTML = renderApp(now, platform, checked, reminderOn);
+      root.innerHTML = renderApp(now, platform, checked, reminderOn, passOwned, storeReady);
       return;
     }
     if (launched) return;

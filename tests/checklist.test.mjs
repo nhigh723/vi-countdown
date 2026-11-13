@@ -159,8 +159,8 @@ describe('guide config sanity', () => {
   });
 });
 
-describe('version — v1.1.0', () => {
-  it('APP_VERSION is 1.1.0', () => {
-    assert.equal(APP_VERSION, '1.1.0');
+describe('version — v1.2.0', () => {
+  it('APP_VERSION is 1.2.0', () => {
+    assert.equal(APP_VERSION, '1.2.0');
   });
 });

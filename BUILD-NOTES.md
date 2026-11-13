@@ -1,10 +1,70 @@
-# Build notes — Countdown VI v1.1
+# Build notes — Countdown VI v1.2
 
 Working log for the next person (or the next session) touching this build.
 Built Nov 12–13, 2026 by Muse (subagent) at Nick's direction. v1.1 (Nov 13)
 added the get-ready checklist, the "What we know" guide, the
 review-hardening fixes, and the Codemagic config; it is the submission
-candidate, not v1.0.
+candidate in review. v1.2 (Nov 13) adds the $1.99 Launch Pass in-app
+purchase (RevenueCat) and carries the four fixes from the independent v1.1
+review audit. v1.2 ships right behind v1.1 once the RevenueCat key is in,
+the Launch Pass product exists in App Store Connect, and the sandbox test
+has passed.
+
+## v1.2 notes
+
+- **Launch Pass** (`src/store.ts` + constants in `src/config.ts`):
+  $1.99 non-consumable, product ID `com.nickhigh.vicountdown.launchpass`,
+  RevenueCat entitlement `launch_pass`. Buyers get a Founder badge on the
+  hero + About immediately, the full v2 checklist experience ad-free at
+  launch, and no ads ever. Purchase state comes from RevenueCat
+  entitlements; localStorage key `cvi.launchpass` is only a cache of the
+  last verified state (re-checked on every launch). `initStore()` runs
+  async in `start()` and re-renders if the state changed.
+- **RevenueCat v11 API — read this before touching the store:** the
+  installed `@revenuecat/purchases-capacitor` 11.3.3 has NO
+  `purchaseProduct(productId)` method. The real flow is `getProducts({ productIdentifiers, type: 'NON_SUBSCRIPTION' })` then
+  `purchaseStoreProduct({ product })`. The vintage app's `src/store.ts`
+  calls the non-existent `purchaseProduct()` — that would throw on a real
+  device; do not copy that pattern. (Flagged to the parent Nov 13; the
+  vintage app is not fixed yet.) Cancellation error code is
+  `PURCHASE_CANCELLED_ERROR` ("1").
+- **Dynamic import:** `store.ts` loads `@revenuecat/purchases-capacitor`
+  via `await import()` inside `loadPurchases()` — only on a native
+  platform with a real key. The web preview never loads the SDK, and the
+  unit tests import `store.ts` without it.
+- **No-key behavior is deliberate:** with the placeholder key the buy
+  button is disabled and the section shows "Purchases are available in the
+  App Store version of the app — this preview can't take payments." No
+  simulated purchase (unlike the vintage app's preview mode). v1.2 does
+  NOT submit until the real key is in.
+- **Honest copy decision:** v1.1's teaser says the v2 checklist is a free
+  update, so the pass does NOT claim to "unlock" it — it buys the full
+  checklist experience ad-free, "no ads, nothing else to buy." Same
+  reason the About version line mentions ONLY the Launch Pass (audit
+  SHOULD-FIX-2): the future v2 $2.99 remove-ads is not advertised
+  anywhere until it exists.
+- **Audit fixes carried from v1.1** (see
+  `~/workspace/gta-companion/REVIEW-AUDIT.md`, fixed in the v1.1 dir in
+  commit 1f97648): SOURCES gains "Ultimate Edition contents" + "Game
+  Pass" (exact wording copied); privacy.html carries the v1.1 "three
+  small settings" + share-card cache wording verbatim, with the
+  RevenueCat disclosure added on top; the `?now=` / `?platform=` QA
+  hooks are kept (N1 — the chrome drive depends on `?now=`).
+- **config.xml version gotcha (again):** `npx cap sync ios` regenerates
+  `ios/App/App/config.xml` with a default widget version of 1.0.0. Set
+  back to 1.2.0 after the last sync. Cosmetic — the App Store version
+  comes from MARKETING_VERSION (1.2) in the Xcode project.
+- **Drive gotcha — CSS uppercase vs innerText:** the Founder badge uses
+  `text-transform: uppercase`, and `innerText` returns the RENDERED
+  (uppercased) text, so the drive asserts `/Founder/i`, not `/Founder/`.
+- **TS gotchas:** (1) the placeholder API key constant is typed
+  `: string` explicitly — otherwise `tsc` narrows the literal and flags
+  the `!== ''` comparison as unintentional. (2) `root` narrowing does not
+  persist into a hoisted function declaration — `rerenderWithPassStatus`
+  is an arrow-function const, which preserves it.
+- **`cap sync ios`** re-ran for v1.2 and found the RevenueCat plugin,
+  adding its pod to `ios/App/Podfile` (4 plugin pods now). `pod install`
+  still needs the Mac / Codemagic.
 
 ## v1.1 notes
 
@@ -126,3 +186,7 @@ the Mac mini submission steps and QA.md for the verified checklist.
 - Real-iPhone / Simulator test (needs the Mac mini).
 - First Xcode compile + `pod install` (needs the Mac mini).
 - App Review outcome; "VI" trademark residual risk + rename fallback.
+- v1.2: RevenueCat public API key (Nick's free account) + IAP product in
+  App Store Connect + sandbox test (see README "RevenueCat setup").
+- v1.2: update the App Store Connect privacy declaration — no longer
+  "Data Not Collected" (RevenueCat purchase data).

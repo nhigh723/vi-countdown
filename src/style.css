@@ -544,6 +544,63 @@ a { color: var(--teal); }
 
 .app-footer p { margin: 0; color: var(--muted); font-size: 12.5px; }
 
+/* ---------- Launch Pass (v1.2) ---------- */
+
+.founder-badge {
+  display: inline-block;
+  margin: 0 0 14px;
+  padding: 6px 14px;
+  border-radius: 999px;
+  background: linear-gradient(90deg, rgba(255, 46, 136, 0.25), rgba(0, 229, 199, 0.25));
+  border: 1px solid var(--teal);
+  color: var(--teal);
+  font-size: 13px;
+  font-weight: 800;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+.founder-line {
+  color: var(--teal);
+  font-weight: 700;
+  font-size: 15px;
+}
+
+.pass-active {
+  color: var(--teal);
+  font-weight: 800;
+  font-size: 17px;
+  margin: 0 0 12px;
+}
+
+.pass-price {
+  font-weight: 700;
+  font-size: 16px;
+  margin: 16px 0 12px;
+}
+
+.pass-note {
+  color: var(--muted);
+  font-size: 13.5px;
+  margin: 12px 0 0;
+}
+
+.pass-status {
+  margin: 12px 0 0;
+  color: var(--muted);
+  font-size: 13.5px;
+  min-height: 20px;
+}
+
+#launch-pass .btn-block { width: 100%; }
+
+#launch-pass .btn-block + .btn-block { margin-top: 10px; }
+
+.btn[disabled] {
+  opacity: 0.55;
+  cursor: not-allowed;
+}
+
 /* Small phones: keep the countdown digits inside the tiles. */
 @media (max-width: 360px) {
   .cd-num { font-size: 36px; }

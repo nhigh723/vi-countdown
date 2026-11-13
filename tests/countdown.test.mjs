@@ -147,11 +147,15 @@ describe('config — the launch facts', () => {
   });
 });
 
-describe('monetization — v1 is free, no ads', () => {
-  it('ads are off and no purchase exists in v1', () => {
+describe('monetization — v1.2 is free, no ads; Launch Pass is ad-free forever', () => {
+  it('ads are off and no purchase exists without a pass', () => {
     assert.equal(ADS_ENABLED, false);
     assert.equal(hasRemoveAds(), false);
     assert.equal(shouldShowAds(), false);
+  });
+  it('Launch Pass holders never see ads', () => {
+    assert.equal(hasRemoveAds(true), true);
+    assert.equal(shouldShowAds(true), false);
   });
   it('the v2 remove-ads product ID is reserved and well-formed', () => {
     assert.equal(REMOVE_ADS_PRODUCT_ID, 'com.nickhigh.vicountdown.removeads');

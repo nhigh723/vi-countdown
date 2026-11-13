@@ -66,6 +66,13 @@ SHARE YOUR COUNTDOWN
 One tap turns the countdown into a shareable card — your days and hours to
 go, ready for Messages, socials, or anywhere.
 
+LAUNCH PASS — $1.99, ONE TIME
+Support the app and lock in the full launch experience: a Founder badge on
+your countdown and in About, the moment you buy; the full 100% checklist
+experience, ad-free, the moment the v2 update ships; and no ads, ever. One
+purchase, no subscription, no renewals. Restore it any time on any device
+signed in with the same Apple ID.
+
 WHAT WE KNOW
 The story, the setting, and the cast — everything Rockstar has officially
 confirmed, with no rumors and no leaks. Jason Duval and Lucia Caminos, the
@@ -85,7 +92,9 @@ AFTER LAUNCH
 When the countdown hits zero, the app flips to launch mode — and the 100%
 completion checklist (missions, collectibles) is coming in the next update.
 
-Free. No ads. No account. No data collected. Works offline.
+Free. No ads. No account. Works offline. Optional $1.99 one-time Launch
+Pass (see above). The app itself collects no data; purchases are processed
+by Apple and RevenueCat — see the privacy policy.
 
 ---
 Unofficial fan app. Not affiliated with, endorsed by, or connected to
@@ -106,14 +115,42 @@ safer category for a companion/countdown app.)
 
 ## Age rating
 
-Answer the questionnaire honestly. The app itself contains no mature content
-(a countdown, facts, and links), but it references a game rated ESRB Mature
-17+. Let the questionnaire decide; expect 12+ or 17+.
+v1.1 was rated **4+** in App Store Connect (questionnaire, all No/None
+answers). v1.2 adds only the Launch Pass purchase; re-run the questionnaire
+if Connect asks — no content change.
+
+## In-app purchase (create in App Store Connect BEFORE submitting v1.2)
+
+- Product ID: `com.nickhigh.vicountdown.launchpass`
+- Display name: **Launch Pass**
+- Type: **Non-consumable**, price **$1.99**
+- Review screenshot: `store/iap-launchpass-screenshot.png` (the Launch Pass
+  section; the button is disabled in the preview because the RevenueCat key
+  wasn't configured yet — the submitted build has it enabled)
+- Once the product exists, the listing automatically shows "Offers In-App
+  Purchases".
 
 ## Privacy
 
-- Data collected: **none**.
+- Data collected: **the app itself collects none.** The optional Launch Pass
+  purchase is processed by Apple and RevenueCat (purchase records + device
+  identifiers) — see the privacy policy.
+- **⚠️ UPDATE the App Store Connect privacy declaration for v1.2:** v1.1 was
+  submitted as "Data Not Collected". That is no longer true — answer the
+  questionnaire for the purchase data (RevenueCat) before submitting.
 - Privacy policy URL: `https://nhigh723.github.io/vi-countdown/privacy.html`
+  (update the live copy from this repo's `privacy.html` first — it now has
+  the RevenueCat disclosure).
+
+## What's New (v1.2)
+
+```
+New in v1.2: the Launch Pass — a $1.99 one-time purchase that gives you a
+Founder badge on your countdown and in About the moment you buy, the full
+100% checklist experience ad-free when the v2 update ships, and no ads,
+ever. No subscription, no renewals, and you can restore it any time. The
+app stays free with no ads for everyone.
+```
 
 ## What's New (v1.1)
 

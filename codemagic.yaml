@@ -2,9 +2,14 @@
 # One-time setup (Fizby's pipeline already has these — same Codemagic team):
 #   1. Team settings > Team integrations > Developer Portal: App Store Connect API key, named "codemagic".
 #   2. App > Environment variables: secret CERTIFICATE_PRIVATE_KEY in group "ios_signing_key".
-#   3. Set APP_STORE_APPLE_ID below to the app's Apple ID from App Store Connect (App Information page).
-#      The Countdown VI app record does not exist yet — create it in App Store Connect first,
-#      then replace the 0000000000 placeholder with its Apple ID.
+#   2b. App > Environment variables: secret REVENUECAT_PUBLIC_KEY in group
+#       "revenuecat" — the RevenueCat project's public iOS API key (appl_…).
+#       The repo's src/config.ts holds ONLY the placeholder; the real key is
+#       injected at build time by the "Inject RevenueCat public key" step below
+#       and is never committed (this repo is public).
+#   3. APP_STORE_APPLE_ID below is the app's Apple ID from App Store Connect
+#      (App Information page). The Countdown VI app record exists (Apple ID
+#      6834272574) and is already filled in.
 workflows:
   ios-release:
     name: iOS release (TestFlight)
@@ -18,12 +23,20 @@ workflows:
       cocoapods: default
       groups:
         - ios_signing_key
+        - revenuecat
       vars:
         BUNDLE_ID: com.nickhigh.vicountdown
         XCODE_WORKSPACE: ios/App/App.xcworkspace
         XCODE_SCHEME: App
         APP_STORE_APPLE_ID: 6834272574   # Countdown VI (App Store Connect Apple ID)
     scripts:
+      - name: Inject RevenueCat public key (CI secret, never committed)
+        script: |
+          if [ -z "$REVENUECAT_PUBLIC_KEY" ]; then echo "REVENUECAT_PUBLIC_KEY is not set — add it as a secret in the 'revenuecat' environment group (Codemagic app settings)"; exit 1; fi
+          sed -i '' "s|^export const REVENUECAT_API_KEY: string = '[^']*';|export const REVENUECAT_API_KEY: string = '$REVENUECAT_PUBLIC_KEY';|" src/config.ts
+          grep -q "^export const REVENUECAT_API_KEY: string = 'appl_" src/config.ts || { echo "RevenueCat key injection failed (assignment line not updated)"; exit 1; }
+          grep -q "REVENUECAT_API_KEY !== 'REPLACE_WITH_REVENUECAT_PUBLIC_API_KEY'" src/config.ts || { echo "isRevenueCatConfigured() check was altered — aborting"; exit 1; }
+          echo "RevenueCat key injected (value masked)"
       - name: Install and build web app
         script: |
           npm ci

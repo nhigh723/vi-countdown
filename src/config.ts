@@ -4,8 +4,36 @@
 // RULE: if a fact cannot be traced to a source below, it does not go in.
 
 export const APP_NAME = 'Countdown VI';
-export const APP_VERSION = '1.1.0';
+export const APP_VERSION = '1.2.0';
 export const BUNDLE_ID = 'com.nickhigh.vicountdown';
+
+/**
+ * Launch Pass (v1.2) — the $1.99 one-time in-app purchase.
+ * Product ID must match App Store Connect exactly. The RevenueCat
+ * entitlement 'launch_pass' must be attached to this product in the
+ * RevenueCat dashboard (entitlements are what gate the Founder badge
+ * and the v2 checklist unlock — never a bare localStorage flag).
+ *
+ * REVENUECAT_API_KEY is a PLACEHOLDER in this repo. The real public iOS
+ * key from the Countdown VI RevenueCat project is injected at build time
+ * from the REVENUECAT_PUBLIC_KEY Codemagic secret (see the "Inject
+ * RevenueCat public key" step in codemagic.yaml), so the key is never
+ * committed to this public repo. With the key injected, purchases are
+ * LIVE (sandbox until the app is reviewed). The public key only
+ * identifies the app; it is NOT a secret.
+ */
+export const LAUNCH_PASS_PRODUCT_ID = 'com.nickhigh.vicountdown.launchpass';
+export const LAUNCH_PASS_ENTITLEMENT_ID = 'launch_pass';
+export const LAUNCH_PASS_PRICE_LABEL = '$1.99';
+export const LAUNCH_PASS_NAME = 'Launch Pass';
+export const REVENUECAT_API_KEY: string = 'REPLACE_WITH_REVENUECAT_PUBLIC_API_KEY';
+
+export function isRevenueCatConfigured(): boolean {
+  return (
+    REVENUECAT_API_KEY !== '' &&
+    REVENUECAT_API_KEY !== 'REPLACE_WITH_REVENUECAT_PUBLIC_API_KEY'
+  );
+}
 
 /**
  * THE countdown target. Local midnight on launch day, Thursday Nov 19, 2026.
