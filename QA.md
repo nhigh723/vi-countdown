@@ -198,6 +198,43 @@ production build served from `file://`
 - [ ] NOT run: no Codemagic build has been triggered (needs the app record +
       the Codemagic hookup — parent's job, not this build's)
 
+## Audit fixes (Nov 13, ~00:40 — independent review audit, REVIEW-AUDIT.md)
+
+The adversarial audit found 1 blocker + 3 should-fixes. All four are fixed
+in this commit; the age-rating blocker is fixed in App Store Connect
+(questionnaire re-answered → 12+), not in code.
+
+- **SHOULD-FIX-2 (footer):** the About version line no longer advertises
+  the $2.99 remove-ads option ("Version 1.1.0 · Free, no ads."). The
+  reserved product ID/constants stay in `monetization.ts` (not
+  user-visible) for v2. Regression test: drive step 21 asserts the exact
+  version line and that About contains no "$2.99".
+- **SHOULD-FIX-3 (sources):** two SOURCES entries added — "Ultimate
+  Edition contents" (Rockstar / Xbox News Nov 10, 2026, PlayStation
+  Store) and "Game Pass" (Xbox Store paid pre-order; Take-Two CEO's
+  day-one-subscription objection). Both facts were verified true by the
+  auditor; this closes the citation gap behind the "every line traces
+  to a source" claim. Regression test: unit test asserts both labels
+  exist in SOURCES.
+- **SHOULD-FIX-1 (privacy policy):** "two small settings" → "three
+  small settings" (console, checklist ticks, reminder toggle) + a line
+  that the share card writes a temporary PNG to the device cache.
+  `privacy.html` is pushed to the preview (main) with this change; the
+  URL in App Store Connect is unchanged.
+- **N1 (QA hooks) — KEPT deliberately:** the `?now=` / `?platform=`
+  overrides are unreachable in production (no URL bar in WKWebView),
+  and the chrome drive depends on `?now=` for the pre-preload and
+  post-launch states. Stripping them would break QA for zero review
+  benefit.
+- **Drive fix:** the world-times step now strips the " You" badge from
+  city names before comparing (the badge is a feature — exactly one
+  city carries it, now asserted), after the step failed when the VM
+  timezone made New York the user city.
+
+**New counts after these fixes: 47/47 unit tests, 25/25 chrome-drive
+steps, zero console errors.** About screenshot re-eyeballed (new source
+entries render; version line verified by drive assertion).
+
 ## Not verified (honest gaps)
 
 - [ ] **Real iPhone test:** the app has been driven in desktop Chromium at

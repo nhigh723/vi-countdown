@@ -6,7 +6,10 @@
 //  - Turn ADS_ENABLED on and wire an ad SDK (AdMob) into the checklist screens.
 //  - Sell REMOVE_ADS_PRODUCT_ID as a $2.99 one-time non-consumable via
 //    RevenueCat; entitlement "remove_ads" hides all ad slots.
-//  - Nothing in v1 reads these flags except the About screen's roadmap line.
+//  - Nothing in v1 reads these flags — they are reserved for v2. (The About
+//    screen's roadmap line that mentioned the price was removed Nov 13, 2026
+//    after a review audit: v1 must not advertise a purchase that doesn't
+//    exist yet. See REVIEW-AUDIT.md SHOULD-FIX-2.)
 
 export const ADS_ENABLED = false;
 

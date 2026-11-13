@@ -43,7 +43,6 @@ import {
 } from './reminder';
 import { getWorldUnlockTimes } from './world-times';
 import { shareCountdownCard } from './share-card';
-import { REMOVE_ADS_PRICE_LABEL } from './monetization';
 
 const PLATFORM_KEY = 'cvi.platform';
 
@@ -343,7 +342,7 @@ function renderAbout(): string {
     <p>${esc(APP_NAME)} is a fan-made countdown. It collects no data, has no account, and works offline — the countdown, timeline, and facts all live inside the app. News links open the official sites in your browser.</p>
     <h3>Where every fact comes from</h3>
     <ul class="fact-list sources-list">${sources}</ul>
-    <p class="version">Version ${esc(APP_VERSION)} · Free, no ads. A ${REMOVE_ADS_PRICE_LABEL} one-time remove-ads option arrives with the v2 checklist update.</p>
+    <p class="version">Version ${esc(APP_VERSION)} · Free, no ads.</p>
     <p><a href="./privacy.html">Privacy policy</a></p>
   </section>`;
 }

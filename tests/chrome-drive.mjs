@@ -186,11 +186,13 @@ try {
   // --- 7g. World unlock times: 8 cities, first-to-last order, correct labels ---
   const worldRows = await page.$$eval('#world .world-item', (els) =>
     els.map((el) => ({
-      city: el.querySelector('.world-city').innerText.trim(),
+      city: el.querySelector('.world-city').innerText.trim().replace(/ You$/, ''),
       time: el.querySelector('.world-time').innerText.trim(),
+      isYou: el.querySelector('.world-you') !== null,
     })),
   );
   assert.equal(worldRows.length, 8);
+  assert.equal(worldRows.filter((r) => r.isYou).length, 1, 'exactly one city carries the You badge');
   assert.deepEqual(
     worldRows.map((r) => r.city),
     ['Auckland', 'Sydney', 'Tokyo', 'Paris', 'London', 'New York', 'Chicago', 'Los Angeles'],
@@ -251,6 +253,12 @@ try {
   const footer = await page.$eval('.app-footer', (el) => el.innerText);
   assert.match(footer, /Unofficial fan app/);
   ok('disclaimer present in About and footer');
+
+  // --- 8b. About version line advertises no purchase (audit SHOULD-FIX-2) ---
+  const versionLine = await page.$eval('#about .version', (el) => el.innerText);
+  assert.equal(versionLine, 'Version 1.1.0 · Free, no ads.');
+  assert.ok(!about.includes('$2.99'), 'About must not advertise a purchase that does not exist');
+  ok('About version line is clean — no advertised purchase');
 
   // --- 9. No placeholder text anywhere on the page ---
   const bodyText = await page.evaluate(() => document.body.innerText);

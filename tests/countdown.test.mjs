@@ -140,6 +140,11 @@ describe('config — the launch facts', () => {
     assert.ok(SOURCES.length >= 10);
     assert.ok(SOURCES.every((s) => s.label.length > 0 && s.detail.length > 0));
   });
+  it('the facts-section lines each have a source entry (audit SHOULD-FIX-3)', () => {
+    const labels = new Set(SOURCES.map((s) => s.label));
+    assert.ok(labels.has('Game Pass'), 'Game Pass line needs a source entry');
+    assert.ok(labels.has('Ultimate Edition contents'), 'Ultimate contents line needs a source entry');
+  });
 });
 
 describe('monetization — v1 is free, no ads', () => {

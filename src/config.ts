@@ -270,6 +270,8 @@ export const SOURCES: FactSource[] = [
   { label: 'Pre-load dates', detail: 'Rockstar Newswire, Nov 3, 2026 ("Pre-Load Begins on November 10"); PlayStation page (Nov 10, midnight local); Rockstar support (physical from Nov 12).' },
   { label: '212 GB storage', detail: 'PlayStation official GTA VI page — "clear a minimum of 212GB of storage space on your PlayStation 5." Rockstar guidance says up to 212 GB depending on device.' },
   { label: 'Editions & prices', detail: 'Standard $79.99 / Ultimate $99.99 / Ultimate Edition Upgrade $20 — Take-Two press release (Jun 24, 2026) and Xbox Store listing, checked Nov 8–9, 2026.' },
+  { label: 'Ultimate Edition contents', detail: 'Rockstar / Xbox News, Nov 10, 2026, and PlayStation Store — the Ultimate Edition Upgrade adds exclusive vehicles, weapons, apparel and more for Jason and Lucia’s story.' },
+  { label: 'Game Pass', detail: 'No Game Pass announcement at launch — the Xbox Store sells the game as a paid pre-order ($79.99 / $99.99), and Take-Two’s CEO has publicly objected to day-one subscription launches. Checked Nov 13, 2026.' },
   { label: 'Pre-order bonus', detail: 'Vintage Vice City Pack + 1 month of GTA+ for purchases before Nov 19, 2026, 11:59:59 PM — Xbox Store listing.' },
   { label: 'Physical = code in a box', detail: 'Rockstar support pages — physical Standard Edition contains a download code, no disc.' },
   { label: 'Single-player, Vice City, Leonida', detail: 'Rockstar / PlayStation / Xbox official pages — single-player story starring Jason and Lucia, set in Vice City, state of Leonida.' },
