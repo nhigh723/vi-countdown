@@ -22,7 +22,7 @@ workflows:
         BUNDLE_ID: com.nickhigh.vicountdown
         XCODE_WORKSPACE: ios/App/App.xcworkspace
         XCODE_SCHEME: App
-        APP_STORE_APPLE_ID: 0000000000   # <- replace with the number from App Store Connect
+        APP_STORE_APPLE_ID: 6834272574   # Countdown VI (App Store Connect Apple ID)
     scripts:
       - name: Install and build web app
         script: |
