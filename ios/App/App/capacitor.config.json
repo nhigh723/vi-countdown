@@ -7,5 +7,9 @@
 		"scrollEnabled": true
 	},
 	"webDir": "dist",
-	"packageClassList": []
+	"packageClassList": [
+		"FilesystemPlugin",
+		"LocalNotificationsPlugin",
+		"SharePlugin"
+	]
 }

@@ -1,12 +1,18 @@
-// Countdown VI v1 — countdown + unlock checker + timeline + facts + news links.
+// Countdown VI v1.1 — countdown + unlock checker + get-ready checklist +
+// launch-night reminder + world unlock times + launch timeline +
+// what-we-know guide + facts + news links + shareable countdown card.
 // Single scroll page. All facts come from config.ts (verified public sources).
 // QA hook (documented in README): ?now=ISO overrides the clock, e.g.
 // ?now=2026-11-20T12:00:00 drives the post-launch state.
 
+import { Capacitor } from '@capacitor/core';
+import { LocalNotifications } from '@capacitor/local-notifications';
 import {
   APP_NAME,
   APP_VERSION,
+  CHECKLIST_ITEMS,
   DISCLAIMER,
+  GUIDE_SECTIONS,
   LAUNCH_LABEL,
   LAUNCH_LOCAL,
   NEWS_LINKS,
@@ -19,6 +25,24 @@ import {
   type PlatformInfo,
 } from './config';
 import { getCountdown, getMilestoneStatus, pad2 } from './countdown';
+import {
+  countChecked,
+  getItemStatus,
+  loadChecked,
+  saveChecked,
+  toggleChecked,
+} from './checklist';
+import {
+  REMINDER_BODY,
+  REMINDER_NOTIFICATION_ID,
+  REMINDER_TITLE,
+  getReminderTime,
+  isReminderTimePassed,
+  loadReminderOn,
+  saveReminderOn,
+} from './reminder';
+import { getWorldUnlockTimes } from './world-times';
+import { shareCountdownCard } from './share-card';
 import { REMOVE_ADS_PRICE_LABEL } from './monetization';
 
 const PLATFORM_KEY = 'cvi.platform';
@@ -98,6 +122,10 @@ function renderHero(now: Date): string {
     </div>
     <p class="hero-date">${LAUNCH_LABEL} &middot; Midnight local time</p>
     ${pill}
+    <div class="hero-share">
+      <button type="button" class="btn btn-ghost" id="share-btn">Share countdown ↗</button>
+      <p class="share-status" id="share-status" aria-live="polite"></p>
+    </div>
   </section>`;
 }
 
@@ -125,6 +153,102 @@ function renderUnlock(platform: PlatformInfo, now: Date): string {
       <li><span class="check-ico">${physicalOut ? '✓' : '○'}</span><span>Physical edition is a code in a box, no disc.${physicalOut ? ' <strong>Available at retailers now.</strong>' : ' Available at retailers from Nov 12.'}</span></li>
     </ul>
     <a class="btn btn-primary btn-block" href="${platform.storeUrl}" target="_blank" rel="noopener">Open on the ${esc(platform.storeLabel)} ↗</a>
+  </section>`;
+}
+
+function renderChecklist(now: Date, checked: ReadonlySet<string>): string {
+  const total = CHECKLIST_ITEMS.length;
+  const done = countChecked(checked);
+  const pct = Math.round((done / total) * 100);
+  const allDone = done === total;
+  const items = CHECKLIST_ITEMS.map((item) => {
+    const isChecked = checked.has(item.id);
+    const st = getItemStatus(item, now);
+    const badge = st
+      ? `<span class="ready-badge${st.live ? ' ready-badge-live' : ''}">${esc(st.label)}</span>`
+      : '';
+    return `
+    <li class="ready-item${isChecked ? ' ready-done' : ''}">
+      <label>
+        <input type="checkbox" data-ready="${esc(item.id)}"${isChecked ? ' checked' : ''} />
+        <span class="ready-body">
+          <span class="ready-title">${esc(item.title)} ${badge}</span>
+          <span class="ready-why">${esc(item.why)}</span>
+        </span>
+      </label>
+    </li>`;
+  }).join('');
+  return `
+  <section class="card" id="ready">
+    <h2>Get ready for launch</h2>
+    <p class="section-sub">Seven things to sort before midnight on Nov 19. Tick them off as you go — your progress is saved on this device.</p>
+    <p class="ready-progress" id="ready-progress" aria-live="polite">${allDone ? `All ${total} done — you're ready. See you at midnight.` : `${done} of ${total} ready`}</p>
+    <div class="progress-track" role="progressbar" aria-valuenow="${done}" aria-valuemin="0" aria-valuemax="${total}" aria-label="Launch readiness"><div class="progress-fill" id="ready-fill" style="width: ${pct}%"></div></div>
+    <ul class="ready-list">${items}</ul>
+  </section>`;
+}
+
+function renderReminder(now: Date, reminderOn: boolean): string {
+  const native = Capacitor.isNativePlatform();
+  const tooLate = isReminderTimePassed(now);
+  const disabled = !native || tooLate;
+  const status = !native
+    ? ''
+    : tooLate
+      ? 'Launch is less than 5 minutes away — the reminder moment has passed.'
+      : reminderOn
+        ? 'Reminder is on — you\u2019ll get a notification at 11:55 PM on Wednesday, Nov 18.'
+        : '';
+  return `
+  <section class="card" id="reminder">
+    <h2>Launch-night reminder</h2>
+    <p class="section-sub">Get a notification 5 minutes before launch — Wednesday, Nov 18 at 11:55 PM, your local time. No account, nothing leaves your device.</p>
+    ${native ? '' : '<p class="reminder-note">Reminders work on your iPhone — this web preview can\u2019t send notifications.</p>'}
+    <label class="switch-row">
+      <span class="switch-label">Remind me at 11:55 PM, Nov 18</span>
+      <span class="switch">
+        <input type="checkbox" data-reminder${reminderOn && native && !tooLate ? ' checked' : ''}${disabled ? ' disabled' : ''} />
+        <span class="slider" aria-hidden="true"></span>
+      </span>
+    </label>
+    <p class="reminder-status" id="reminder-status" aria-live="polite">${esc(status)}</p>
+  </section>`;
+}
+
+function renderWorld(): string {
+  const userTz = Intl.DateTimeFormat().resolvedOptions().timeZone;
+  const rows = getWorldUnlockTimes(userTz);
+  const items = rows
+    .map(
+      (r, i) => `
+    <li class="world-item">
+      <span class="world-rank" aria-hidden="true">${i + 1}</span>
+      <span class="world-city">${esc(r.city)}${r.isUserCity ? ' <span class="world-you">You</span>' : ''}</span>
+      <span class="world-time">${esc(r.localLabel)}</span>
+    </li>`,
+    )
+    .join('');
+  return `
+  <section class="card" id="world">
+    <h2>Who plays first?</h2>
+    <p class="section-sub">Midnight local everywhere — here&rsquo;s when each city&rsquo;s midnight lands in your time.</p>
+    <ol class="world-list">${items}</ol>
+  </section>`;
+}
+
+function renderGuide(): string {
+  const sections = GUIDE_SECTIONS.map(
+    (s) => `
+    <h3>${esc(s.heading)}</h3>
+    <ul class="fact-list">
+      ${s.items.map((it) => `<li><strong>${esc(it.lead)}</strong> ${esc(it.body)}</li>`).join('')}
+    </ul>`,
+  ).join('');
+  return `
+  <section class="card" id="guide">
+    <h2>What we know</h2>
+    <p class="section-sub">Everything Rockstar has officially confirmed — no rumors, no leaks. Every line traces to a source listed in About.</p>
+    ${sections}
   </section>`;
 }
 
@@ -224,7 +348,8 @@ function renderAbout(): string {
   </section>`;
 }
 
-function renderApp(now: Date, platform: PlatformInfo): string {
+function renderApp(now: Date, platform: PlatformInfo, checked: ReadonlySet<string>, reminderOn: boolean): string {
+  const launched = now.getTime() >= LAUNCH_LOCAL.getTime();
   return `
   <header class="app-header">
     <p class="wordmark">COUNTDOWN <span class="wordmark-vi">VI</span></p>
@@ -233,7 +358,11 @@ function renderApp(now: Date, platform: PlatformInfo): string {
   <main>
     ${renderHero(now)}
     ${renderUnlock(platform, now)}
+    ${launched ? '' : renderChecklist(now, checked)}
+    ${launched ? '' : renderReminder(now, reminderOn)}
+    ${launched ? '' : renderWorld()}
     ${renderTimeline(now)}
+    ${renderGuide()}
     ${renderFacts()}
     ${renderChecklistTeaser(now)}
     ${renderNews()}
@@ -242,15 +371,114 @@ function renderApp(now: Date, platform: PlatformInfo): string {
   <footer class="app-footer"><p>${esc(DISCLAIMER)}</p></footer>`;
 }
 
+/** Updates the checklist progress line, bar, and item styling in place after
+ *  a tick — no full re-render, so scroll position and focus are preserved. */
+function refreshChecklistUI(checked: ReadonlySet<string>): void {
+  const total = CHECKLIST_ITEMS.length;
+  const done = countChecked(checked);
+  const progress = document.getElementById('ready-progress');
+  if (progress) {
+    progress.textContent =
+      done === total ? `All ${total} done — you're ready. See you at midnight.` : `${done} of ${total} ready`;
+  }
+  const fill = document.getElementById('ready-fill');
+  if (fill) fill.style.width = `${Math.round((done / total) * 100)}%`;
+  const track = fill?.parentElement;
+  if (track) track.setAttribute('aria-valuenow', String(done));
+}
+
 function start(): void {
   const root = document.getElementById('app');
   if (!root) return;
   let platform = platformById(loadPlatform());
+  let checked = loadChecked(window.localStorage);
+  let reminderOn = loadReminderOn(window.localStorage);
   let wasLaunched = getNow().getTime() >= LAUNCH_LOCAL.getTime();
-  root.innerHTML = renderApp(getNow(), platform);
+  root.innerHTML = renderApp(getNow(), platform, checked, reminderOn);
+
+  async function handleShare(): Promise<void> {
+    const status = document.getElementById('share-status');
+    const btn = document.getElementById('share-btn');
+    if (btn) btn.setAttribute('disabled', 'true');
+    if (status) status.textContent = 'Making your card…';
+    const outcome = await shareCountdownCard(getCountdown(LAUNCH_LOCAL, getNow()));
+    if (btn) btn.removeAttribute('disabled');
+    if (!status) return;
+    status.textContent =
+      outcome === 'shared'
+        ? 'Card shared.'
+        : outcome === 'downloaded'
+          ? 'Card downloaded — share it anywhere.'
+          : outcome === 'cancelled'
+            ? ''
+            : 'Couldn\u2019t make the card. Please try again.';
+  }
+
+  async function handleReminderToggle(input: HTMLInputElement): Promise<void> {
+    const statusEl = document.getElementById('reminder-status');
+    const setStatus = (msg: string): void => {
+      if (statusEl) statusEl.textContent = msg;
+    };
+    if (!Capacitor.isNativePlatform()) {
+      // The switch is disabled on the web; this is a safety net only.
+      input.checked = false;
+      return;
+    }
+    if (input.checked) {
+      if (isReminderTimePassed(getNow())) {
+        input.checked = false;
+        setStatus('Launch is less than 5 minutes away — the reminder moment has passed.');
+        return;
+      }
+      try {
+        let perm = await LocalNotifications.checkPermissions();
+        if (perm.display !== 'granted') {
+          perm = await LocalNotifications.requestPermissions();
+        }
+        if (perm.display !== 'granted') {
+          input.checked = false;
+          reminderOn = false;
+          saveReminderOn(window.localStorage, false);
+          setStatus('Reminders need notification permission. Turn it on in Settings, then try again.');
+          return;
+        }
+        await LocalNotifications.schedule({
+          notifications: [
+            {
+              id: REMINDER_NOTIFICATION_ID,
+              title: REMINDER_TITLE,
+              body: REMINDER_BODY,
+              schedule: { at: getReminderTime() },
+            },
+          ],
+        });
+        reminderOn = true;
+        saveReminderOn(window.localStorage, true);
+        setStatus('Reminder is on — you\u2019ll get a notification at 11:55 PM on Wednesday, Nov 18.');
+      } catch {
+        input.checked = false;
+        reminderOn = false;
+        saveReminderOn(window.localStorage, false);
+        setStatus('Something went wrong setting the reminder. Please try again.');
+      }
+      return;
+    }
+    try {
+      await LocalNotifications.cancel({ notifications: [{ id: REMINDER_NOTIFICATION_ID }] });
+    } catch {
+      /* nothing scheduled — fine */
+    }
+    reminderOn = false;
+    saveReminderOn(window.localStorage, false);
+    setStatus('');
+  }
 
   root.addEventListener('click', (event) => {
     const target = event.target as HTMLElement | null;
+    if (target?.closest?.('#share-btn')) {
+      void handleShare();
+      return;
+    }
     const btn = target?.closest?.('[data-platform]') as HTMLElement | null;
     if (!btn) return;
     const id = btn.getAttribute('data-platform');
@@ -265,12 +493,30 @@ function start(): void {
     }
   });
 
+  // Checklist ticks + reminder toggle: the change event bubbles from the
+  // checkbox up to #app.
+  root.addEventListener('change', (event) => {
+    const target = event.target as HTMLElement | null;
+    if (!(target instanceof HTMLInputElement) || target.type !== 'checkbox') return;
+    if (target.hasAttribute('data-reminder')) {
+      void handleReminderToggle(target);
+      return;
+    }
+    const id = target.getAttribute('data-ready');
+    if (!id || !CHECKLIST_ITEMS.some((i) => i.id === id)) return;
+    checked = toggleChecked(checked, id);
+    saveChecked(window.localStorage, checked);
+    const item = target.closest('.ready-item');
+    if (item) item.classList.toggle('ready-done', target.checked);
+    refreshChecklistUI(checked);
+  });
+
   window.setInterval(() => {
     const now = getNow();
     const launched = now.getTime() >= LAUNCH_LOCAL.getTime();
     if (launched !== wasLaunched) {
       wasLaunched = launched;
-      root.innerHTML = renderApp(now, platform);
+      root.innerHTML = renderApp(now, platform, checked, reminderOn);
       return;
     }
     if (launched) return;

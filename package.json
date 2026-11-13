@@ -1,1 +1,28 @@
-{"dependencies":{"@capacitor/cli":"^7.0.0","@capacitor/core":"^7.0.0","@capacitor/ios":"^7.0.0"},"description":"Countdown VI — unofficial fan countdown to the Grand Theft Auto VI launch (Nov 19, 2026): live countdown, unlock-time checker, launch timeline, facts, and official news links.","devDependencies":{"jsdom":"^26.0.0","puppeteer-core":"^24.0.0","typescript":"^5.6.0","vite":"^6.0.0"},"keywords":[],"license":"ISC","name":"countdown-vi","scripts":{"build":"tsc && vite build","dev":"vite","preview":"vite preview --host --port 4173","test":"node --test \"tests/*.test.mjs\""},"type":"module","version":"1.0.0"}
+{
+  "dependencies": {
+    "@capacitor/cli": "^7.0.0",
+    "@capacitor/core": "^7.0.0",
+    "@capacitor/filesystem": "^7.1.9",
+    "@capacitor/ios": "^7.0.0",
+    "@capacitor/local-notifications": "^7.0.7",
+    "@capacitor/share": "^7.0.4"
+  },
+  "description": "Countdown VI — unofficial fan countdown to the Grand Theft Auto VI launch (Nov 19, 2026): live countdown, unlock-time checker, get-ready checklist, launch timeline, what-we-know guide, facts, and official news links.",
+  "devDependencies": {
+    "jsdom": "^26.0.0",
+    "puppeteer-core": "^24.0.0",
+    "typescript": "^5.6.0",
+    "vite": "^6.0.0"
+  },
+  "keywords": [],
+  "license": "ISC",
+  "name": "countdown-vi",
+  "scripts": {
+    "build": "tsc && vite build",
+    "dev": "vite",
+    "preview": "vite preview --host --port 4173",
+    "test": "node --test \"tests/*.test.mjs\""
+  },
+  "type": "module",
+  "version": "1.1.0"
+}

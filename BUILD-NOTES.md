@@ -1,9 +1,66 @@
-# Build notes — Countdown VI v1.0
+# Build notes — Countdown VI v1.1
 
 Working log for the next person (or the next session) touching this build.
-Built Nov 12–13, 2026 by Muse (subagent) at Nick's direction.
+Built Nov 12–13, 2026 by Muse (subagent) at Nick's direction. v1.1 (Nov 13)
+added the get-ready checklist, the "What we know" guide, the
+review-hardening fixes, and the Codemagic config; it is the submission
+candidate, not v1.0.
 
-## What shipped
+## v1.1 notes
+
+- **Get-ready checklist** (`src/checklist.ts` + `CHECKLIST_ITEMS` in
+  `src/config.ts`): 7 items, localStorage key `cvi.ready`, progress
+  "X of 7 ready" + gradient bar. Live badges follow the clock (pre-load /
+  physical / bonus deadline). The section hides after launch. The checklist
+  logic is pure + unit-tested (16 tests); `main.ts` only wires it to the
+  DOM and real localStorage.
+- **"What we know" guide** (`GUIDE_SECTIONS` in `src/config.ts`): story,
+  setting, cast — official sources only, each section's `sourceLabel` must
+  exist in `SOURCES` (enforced by a unit test). Full names and the six
+  regions were verified Nov 13 against Rockstar's official pages via 5+
+  corroborating sources each (see QA.md).
+- **`allowImportingTsExtensions`:** `src/checklist.ts` imports
+  `./config.ts` with an explicit extension because Node's type-stripping
+  test runner cannot resolve extensionless TS imports. `tsconfig.json`
+  enables `allowImportingTsExtensions` (allowed with `noEmit: true`) so
+  `tsc` accepts it; Vite resolves it fine. If a future module needs to be
+  unit-tested, import it the same way.
+- **Review hardening:** subtitle shortened to 25 chars (was 31, over the
+  30-char limit); keywords note corrected to 86 chars (was 99); news titles
+  softened; privacy policy covers checklist localStorage; listing copy now
+  describes the checklist + guide as included in v1.1.
+- **v1.1 features (Nov 13, second batch):** launch-night reminder
+  (`src/reminder.ts` + `@capacitor/local-notifications`), shareable
+  countdown card (`src/share-card.ts` + `@capacitor/share` and
+  `@capacitor/filesystem`), world unlock times (`src/world-times.ts`,
+  Intl-only, no hardcoded offsets). The three plugins are pinned to their
+  v7 lines (`@capacitor/*@^7.0.0`) — the v8 lines need Capacitor 8 and npm
+  refuses them (ERESOLVE). `npx cap sync ios` found all 3 plugins and
+  added their pods to `ios/App/Podfile`; it skipped `pod install` (no
+  CocoaPods on the VM) — that runs on the Mac / Codemagic.
+- **Share card native path:** on iOS the PNG is written to the cache
+  directory via Filesystem, then shared via the Share plugin's `files`.
+  On the web it tries the Web Share API with files, then downloads the PNG.
+  The native sheet has never run on a device — first iPhone run must check
+  it (see QA.md).
+- **config.xml version gotcha:** `npx cap sync ios` / `npx cap copy ios`
+  regenerates `ios/App/App/config.xml` with a default widget version of
+  1.0.0, wiping a manual bump. The file was set back to 1.1.0 after the
+  last sync. It is cosmetic anyway — the App Store version comes from
+  MARKETING_VERSION in the Xcode project, not config.xml. If you re-sync,
+  re-check this file.
+- **World-times math:** each city's midnight is computed as UTC-midnight
+  minus the Intl-measured offset at that instant. One correction is exact
+  because Nov 19, 2026 is not a DST transition day in any listed city;
+  the unit tests pin all eight UTC instants, so any tz-data surprise fails
+  loudly.
+- **Codemagic:** `codemagic.yaml` (adapted from Fizby's, same shape) was
+  already present in the project root when v1.1 started — verified against
+  the Fizby template (BUNDLE_ID `com.nickhigh.vicountdown`, placeholder
+  Apple ID `0000000000`, TestFlight on, App Store off). Included in the
+  source manifest. No build has been triggered.
+
+## What shipped (v1.0)
 
 Capacitor 7 + TypeScript + Vite app in `~/workspace/gta-companion/`,
 repo `nhigh723/vi-countdown`: `main` branch holds the built site (GitHub
