@@ -1,0 +1,9 @@
+node_modules/
+dist/
+qa-shots/
+store/screenshots/
+store/icon-1024.png
+ios/App/App/Assets.xcassets/AppIcon.appiconset/AppIcon-512@2x.png
+ios/App/App/Assets.xcassets/Splash.imageset/*.png
+*.muse-github-snapshot-sync.json
+.DS_Store

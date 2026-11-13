@@ -1,0 +1,11 @@
+{
+	"appId": "com.nickhigh.vicountdown",
+	"appName": "Countdown VI",
+	"ios": {
+		"backgroundColor": "#0b0b14",
+		"contentInset": "never",
+		"scrollEnabled": true
+	},
+	"webDir": "dist",
+	"packageClassList": []
+}
