@@ -52,5 +52,10 @@
     "puppeteer-core": "^24.43.1",
     "ts-jest": "^29.4.15",
     "typescript": "~6.0.3"
+  },
+  "overrides": {
+    "@bacons/apple-targets": {
+      "@expo/require-utils": "^58.0.6"
+    }
   }
 }
