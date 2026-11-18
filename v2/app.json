@@ -1,0 +1,70 @@
+{
+  "expo": {
+    "name": "Countdown VI",
+    "slug": "countdown-vi",
+    "scheme": "countdownvi",
+    "version": "2.0",
+    "orientation": "portrait",
+    "icon": "./assets/icon.png",
+    "userInterfaceStyle": "dark",
+    "splash": {
+      "backgroundColor": "#0b0b14"
+    },
+    "ios": {
+      "bundleIdentifier": "com.nickhigh.vicountdown",
+      "buildNumber": "3",
+      "supportsTablet": false,
+      "entitlements": {
+        "com.apple.security.application-groups": [
+          "group.com.nickhigh.vicountdown"
+        ]
+      },
+      "infoPlist": {
+        "CFBundleDisplayName": "Countdown VI",
+        "ITSAppUsesNonExemptEncryption": false
+      },
+      "privacyManifests": {
+        "NSPrivacyTracking": false,
+        "NSPrivacyTrackingDomains": [],
+        "NSPrivacyCollectedDataTypes": []
+      },
+      "appleTeamId": "Z3S5X9HZXU"
+    },
+    "plugins": [
+      "expo-iap",
+      "expo-sharing",
+      [
+        "expo-build-properties",
+        {
+          "ios": {
+            "deploymentTarget": "16.4"
+          }
+        }
+      ],
+      "@bacons/apple-targets"
+    ],
+    "extra": {
+      "eas": {
+        "build": {
+          "experimental": {
+            "ios": {
+              "appExtensions": [
+                {
+                  "bundleIdentifier": "com.nickhigh.vicountdown.widget",
+                  "targetName": "CountdownVIWidget",
+                  "entitlements": {
+                    "com.apple.security.application-groups": [
+                      "group.com.nickhigh.vicountdown"
+                    ]
+                  }
+                }
+              ]
+            }
+          }
+        },
+        "projectId": "b341a3d4-272c-485b-87b6-c005d9eb5b6a"
+      }
+    },
+    "owner": "nickhigh"
+  }
+}

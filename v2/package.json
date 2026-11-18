@@ -1,0 +1,56 @@
+{
+  "name": "countdown-vi",
+  "version": "2.0.0",
+  "main": "index.ts",
+  "private": true,
+  "scripts": {
+    "start": "expo start",
+    "ios": "expo run:ios",
+    "web": "expo start --web",
+    "typecheck": "tsc --noEmit",
+    "test": "jest"
+  },
+  "jest": {
+    "testEnvironment": "node",
+    "testMatch": [
+      "**/tests/*.test.ts"
+    ],
+    "transform": {
+      "^.+\\.tsx?$": [
+        "ts-jest",
+        {
+          "diagnostics": false
+        }
+      ]
+    }
+  },
+  "dependencies": {
+    "@bacons/apple-targets": "^5.0.0",
+    "@expo/metro-runtime": "~58.0.17",
+    "@react-native-async-storage/async-storage": "2.2.0",
+    "expo": "~58.0.26",
+    "expo-build-properties": "~58.0.12",
+    "expo-constants": "~58.0.16",
+    "expo-haptics": "~58.0.8",
+    "expo-iap": "^6.5.0",
+    "expo-linear-gradient": "~58.0.4",
+    "expo-linking": "~58.0.17",
+    "expo-sharing": "~58.0.23",
+    "expo-status-bar": "~58.0.5",
+    "react": "^19.3.0",
+    "react-dom": "^19.3.0",
+    "react-native": "^0.88.1",
+    "react-native-safe-area-context": "~5.11.1",
+    "react-native-view-shot": "6.1.1",
+    "react-native-web": "^0.21.4"
+  },
+  "devDependencies": {
+    "@types/jest": "^30.0.0",
+    "@types/node": "^26.6.6",
+    "@types/react": "~19.3.0",
+    "jest": "^30.5.2",
+    "puppeteer-core": "^24.43.1",
+    "ts-jest": "^29.4.15",
+    "typescript": "~6.0.3"
+  }
+}

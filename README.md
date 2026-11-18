@@ -1,3 +1,5 @@
+> **v2-expo branch:** the 2.0 native rebuild (Expo) lives in [`v2/`](v2/README.md). Everything below describes the 1.x Capacitor app.
+
 # Countdown VI — GTA VI Launch Companion (v1.1)
 
 An unofficial fan companion app counting down to the **Grand Theft Auto VI**
