@@ -26,6 +26,18 @@ The in-app copy never hard-codes a price: the button shows StoreKit's localized 
 - $2.99 is still an impulse price; $1.99 leaves money on the table for a feature set this size, $4.99 starts to feel like a game DLC price for a fan app (judgment, not data).
 - Proceeds at $2.99: about **$2.54** with the App Store Small Business Program (15%) or **$2.09** at the standard 30%. ASC shows $1.40 proceeds on the current $1.99 tier, which is the 30% rate — **check whether Nick's account is enrolled in the Small Business Program** ([Apple](https://developer.apple.com/app-store/small-business-program/)); enrolling is free and doubles-ish the margin on every sale.
 
+## Upside — rough estimate, every input is an assumption [A]
+
+Revenue ≈ active 2.0 users × Pro conversion × proceeds per sale.
+
+| Active users who get 2.0 [A] | Conversion 1% [A] | Conversion 3% [A] |
+|---|---|---|
+| 5,000 | 50 sales ≈ $105–$127 | 150 ≈ $314–$381 |
+| 25,000 | 250 ≈ $523–$635 | 750 ≈ $1,568–$1,905 |
+| 100,000 | 1,000 ≈ $2,090–$2,540 | 3,000 ≈ $6,270–$7,620 |
+
+Proceeds range = $2.09 (30% commission) to $2.54 (Small Business Program 15%). 1–3% is deliberately below AppsFlyer's ~11% NA first-purchase rate for non-game apps (that figure is for apps built around paying; a free fan countdown is not) — see `RESEARCH.md`. Install volume is the unknown that matters: we have no 1.x download data yet (1.1 isn't live). Most of it lands in the first 1–2 weeks after launch, so getting 2.0 approved quickly after 1.1 is worth more than adding features.
+
 ## Sandbox test checklist (needs the TestFlight build + a Sandbox Apple ID)
 
 1. Fresh install → Pro tab shows "Unlock Pro — $x.xx" with the real price.

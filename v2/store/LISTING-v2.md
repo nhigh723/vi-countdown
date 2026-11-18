@@ -27,8 +27,12 @@ Your completion percentage and day count, right on your Home Screen.
 SHARE YOUR PROGRESS
 Make a clean share card of your progress or the countdown in one tap.
 
-LAUNCH COUNTDOWN
-Before launch: a live countdown to midnight local time on November 19, 2026. After launch: the day count, plus quick links to the official PlayStation Store and Microsoft Store pages.
+LAUNCH COUNTDOWN & GUIDE
+Before launch: a live countdown to midnight local time on November 19, 2026. After launch: the day count.
+• When can I play? — PS5 and Xbox unlock times, from the official store pages
+• Who plays first — midnight in eight cities, shown in your own time
+• Timeline and "What we know", every fact from official sources, with the sources listed in the app
+• Quick links to the official PlayStation Store, Microsoft Store and Rockstar Newswire pages
 
 COUNTDOWN VI PRO — OPTIONAL, ONE-TIME PURCHASE
 • Unlimited custom tracker categories
@@ -48,6 +52,7 @@ Rebuilt from the ground up as a native app.
 • New: your 100% tracker — set your own goals and tick things off as you play
 • New: Home Screen widget with your progress and day count
 • New: share your progress as a card
+• Launch guide: unlock times for PS5 and Xbox, who plays first, timeline and sourced facts
 • New: optional Countdown VI Pro — unlimited trackers, Lock Screen widgets, extra styles (one-time purchase)
 ```
 
@@ -55,13 +60,13 @@ Rebuilt from the ground up as a native app.
 Still **Data Not Collected**: no analytics, no ads, no account, no server. The purchase goes only to Apple (StoreKit); tracker data stays in on-device storage and the widget's App Group.
 
 ## Screenshots needed (6.9")
-Home (countdown/day count) · Tracker with goals set · Pro tab · Home Screen widget · Lock Screen widget · a share card. Take them from the TestFlight build on Nick's iPhone 17 Pro Max (1320×2868 is accepted for 6.9").
+Home (countdown/day count) · Launch tab · Tracker with goals set · Pro tab · Home Screen widget · Lock Screen widget · a share card. Take them from the TestFlight build on Nick's iPhone 17 Pro Max (1320×2868 is accepted for 6.9").
 
 ## Review notes (paste into App Review Information → Notes)
 ```
 Countdown VI is an unofficial fan companion. It contains no Rockstar or Take-Two artwork, logos or game data; all visuals are original gradients and text, and the tracker's categories are generic words with goals the user types in. Official store/news buttons open the publishers' own pages in Safari.
 
-How to test: Tracker tab → set a Goal on any row → tap + / −. "Add your own" adds a custom category (free: 1). Pro tab → "Unlock Pro" buys the one-time non-consumable com.nickhigh.vicountdown.launchpass; "Restore Purchases" is on the Pro and About tabs. Widgets: long-press the Home Screen → + → "Countdown VI" (Home Screen widget is free; Lock Screen widgets need Pro).
+How to test: Home shows the countdown (day count after Nov 19). Launch tab: PS5 / Xbox unlock times, who plays first, timeline, sourced facts ("Show all sources"). Tracker tab → set a Goal on any row → tap + / −. "Add your own" adds a custom category (free: 1). Pro tab → "Unlock Pro" buys the one-time non-consumable com.nickhigh.vicountdown.launchpass; "Restore Purchases" is on the Pro and About tabs. Widgets: long-press the Home Screen → + → "Countdown VI" (Home Screen widget is free; Lock Screen widgets need Pro).
 
 No login, no account, no data collection, no ads, no third-party SDKs that collect data. Same behaviour in every region.
 ```

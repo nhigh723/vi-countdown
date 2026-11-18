@@ -9,7 +9,7 @@
     "userInterfaceStyle": "dark",
     "ios": {
       "bundleIdentifier": "com.nickhigh.vicountdown",
-      "buildNumber": "3",
+      "buildNumber": "4",
       "supportsTablet": false,
       "entitlements": {
         "com.apple.security.application-groups": [

@@ -57,6 +57,21 @@ try {
   ok(`home renders (${launched ? 'launch mode' : 'countdown mode'}), store links present`);
   await page.screenshot({ path: `${SHOTS}/01-home.png` });
 
+  await clickText('Launch');
+  t = await text();
+  assert.match(t, /When can I play\?/);
+  assert.match(t, /midnight local time/);
+  await clickText('Xbox');
+  t = await text();
+  assert.match(t, /Xbox Series X\|S/);
+  assert.match(t, /Timeline/);
+  assert.match(t, /What we know/);
+  assert.match(t, /Who plays first/);
+  await clickText('Show all sources');
+  assert.match(await text(), /Launch date & platforms:/);
+  ok('launch tab: unlock checker PS5/Xbox, who plays first, timeline, what we know, sources');
+  await page.screenshot({ path: `${SHOTS}/01b-launch.png`, fullPage: true });
+
   await clickText('Tracker');
   t = await text();
   assert.match(t, /Your 100% tracker/);

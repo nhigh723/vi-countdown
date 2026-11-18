@@ -1,5 +1,5 @@
 // Countdown VI v2 — native rebuild (Expo). Free core: countdown / launch
-// mode, store links, 100% tracker (six generic categories + 1 custom),
+// mode, unlock checker + who plays first, timeline, sourced facts, store links, 100% tracker (six generic categories + 1 custom),
 // home-screen widget, Neon share cards. Pro (one-time, StoreKit): unlimited
 // custom trackers, four extra card + widget styles, lock-screen widgets,
 // Founder badge. No ads, no account, no analytics.
@@ -60,8 +60,9 @@ import { hydrate, storage } from './src/persist';
 import { buyPro, initStore, listenForPro, restorePro } from './src/iap';
 import { syncWidget } from './src/widgetSync';
 import { ShareCard, type CardContent } from './src/ShareCard';
+import { GUIDE_SECTIONS, PLATFORMS, SOURCES, TIMELINE, safeWorldUnlockTimes, type PlatformId } from './src/guide';
 
-type Tab = 'home' | 'tracker' | 'pro' | 'about';
+type Tab = 'home' | 'launch' | 'tracker' | 'pro' | 'about';
 const C = { bg: '#0b0b14', surface: '#151522', surface2: '#1c1c2e', text: '#f2f2f8', muted: '#a7a7bd', pink: '#ff2e88', teal: '#00e5c7', purple: '#7c5cff', line: '#26263a', green: '#34d399' };
 
 function useNow(): Date {
@@ -219,6 +220,7 @@ function Root() {
         {tab === 'home' && (
           <HomeTab now={now} launched={launched} day={day} percent={summary.tracked ? summary.percent : null} onShare={shareCountdown} sharing={busy === 'share'} goTracker={() => setTab('tracker')} />
         )}
+        {tab === 'launch' && <LaunchTab now={now} launched={launched} />}
         {tab === 'tracker' && (
           <TrackerTab
             tracker={tracker}
@@ -328,6 +330,71 @@ function HomeTab({ now, launched, day, percent, onShare, sharing, goTracker }: {
       <Card>
         <Text style={styles.h2}>Widgets</Text>
         <Text style={styles.muted}>Add Countdown VI to your Home Screen: touch and hold an empty spot, tap Edit → Add Widget, then search “Countdown VI”. It shows your 100% progress and day count.</Text>
+      </Card>
+    </>
+  );
+}
+
+function LaunchTab({ now, launched }: { now: Date; launched: boolean }) {
+  const [platform, setPlatform] = useState<PlatformId>('ps5');
+  const [showSources, setShowSources] = useState(false);
+  const p = PLATFORMS.find((x) => x.id === platform) ?? PLATFORMS[0];
+  const world = useMemo(() => safeWorldUnlockTimes(), []);
+  return (
+    <>
+      <Card>
+        <Text style={styles.h2}>When can I play?</Text>
+        <View style={styles.seg}>
+          {PLATFORMS.map((x) => (
+            <Pressable key={x.id} testID={`plat-${x.id}`} accessibilityRole="button" accessibilityState={{ selected: platform === x.id }} onPress={() => setPlatform(x.id)} style={[styles.segBtn, platform === x.id && styles.segOn]}>
+              <Text style={[styles.segText, platform === x.id && { color: C.text }]}>{x.short}</Text>
+            </Pressable>
+          ))}
+        </View>
+        <Text style={styles.h3}>{p.label}</Text>
+        <Text style={styles.big}>{launched ? 'Unlocked — it’s out now.' : p.unlockLine}</Text>
+        <Text style={styles.muted}>{p.unlockNote}</Text>
+        <Text style={styles.small}>{p.preloadLine}</Text>
+        <Btn label={`${p.storeLabel} ↗`} kind="ghost" onPress={() => void Linking.openURL(p.storeUrl)} />
+      </Card>
+      {world.length ? (
+        <Card>
+          <Text style={styles.h2}>Who plays first</Text>
+          <Text style={styles.small}>Midnight local in each city, shown in your time.</Text>
+          {world.map((r) => (
+            <View key={r.city} style={styles.worldRow}>
+              <Text style={[styles.h3, r.isUserCity && { color: C.pink }]}>{r.city}{r.isUserCity ? ' (you)' : ''}</Text>
+              <Text style={[styles.count, now.getTime() >= r.utcMs && { color: C.green }]}>{now.getTime() >= r.utcMs ? 'Unlocked' : r.localLabel}</Text>
+            </View>
+          ))}
+        </Card>
+      ) : null}
+      <Card>
+        <Text style={styles.h2}>Timeline</Text>
+        {TIMELINE.map((t) => (
+          <View key={t.title} style={{ marginTop: 6 }}>
+            <Text style={styles.h3}>{now.getTime() >= t.date.getTime() ? '✓ ' : ''}{t.dateLabel} · {t.title}</Text>
+            <Text style={styles.muted}>{t.detail}</Text>
+          </View>
+        ))}
+      </Card>
+      <Card>
+        <Text style={styles.h2}>What we know</Text>
+        {GUIDE_SECTIONS.map((g) => (
+          <View key={g.heading} style={{ marginTop: 6, gap: 4 }}>
+            <Text style={styles.h3}>{g.heading}</Text>
+            {g.items.map((i) => (
+              <Text key={i.lead} style={styles.muted}><Text style={{ color: C.text, fontWeight: '700' }}>{i.lead}</Text> {i.body}</Text>
+            ))}
+            <Text style={styles.small}>Source: {g.sourceLabel}</Text>
+          </View>
+        ))}
+        <Btn label={showSources ? 'Hide sources' : 'Show all sources'} kind="ghost" onPress={() => setShowSources((v) => !v)} />
+        {showSources
+          ? SOURCES.map((s) => (
+              <Text key={s.label} style={styles.small}><Text style={{ color: C.text, fontWeight: '700' }}>{s.label}: </Text>{s.detail}</Text>
+            ))
+          : null}
       </Card>
     </>
   );
@@ -505,6 +572,7 @@ function AboutTab({ onRestore, busy, status }: { onRestore: () => void; busy: st
 function TabBar({ tab, onTab }: { tab: Tab; onTab: (t: Tab) => void }) {
   const tabs: [Tab, string, string][] = [
     ['home', '⏱', 'Home'],
+    ['launch', '◷', 'Launch'],
     ['tracker', '✓', 'Tracker'],
     ['pro', '★', 'Pro'],
     ['about', 'ⓘ', 'About'],
@@ -567,5 +635,10 @@ const styles = StyleSheet.create({
   tabBtn: { flex: 1, alignItems: 'center', paddingVertical: 8 },
   tabIcon: { color: C.muted, fontSize: 18 },
   tabLabel: { color: C.muted, fontSize: 11, fontWeight: '600', marginTop: 2 },
+  seg: { flexDirection: 'row', backgroundColor: C.surface2, borderRadius: 12, padding: 4, gap: 4 },
+  segBtn: { flex: 1, minHeight: 40, borderRadius: 9, alignItems: 'center', justifyContent: 'center' },
+  segOn: { backgroundColor: C.pink },
+  segText: { color: C.muted, fontSize: 15, fontWeight: '800' },
+  worldRow: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', paddingVertical: 6, borderBottomWidth: 1, borderBottomColor: C.line },
   offscreen: { position: 'absolute', left: -10000, top: 0 },
 });

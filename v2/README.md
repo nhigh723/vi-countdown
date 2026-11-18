@@ -7,6 +7,7 @@ Unofficial fan companion for the Nov 19, 2026 launch, rebuilt in Expo / React Na
 | | Free | Pro (one-time) |
 |---|---|---|
 | Countdown before launch / "Day N" launch mode after | ✓ | ✓ |
+| Launch tab: PS5/Xbox unlock checker, who plays first (8 cities), timeline, sourced facts + source list | ✓ | ✓ |
 | Official store + news links | ✓ | ✓ |
 | 100% tracker: six generic categories, your own goals, + / − | ✓ | ✓ |
 | Custom tracker categories | 1 | Unlimited |
@@ -23,23 +24,25 @@ Unofficial fan companion for the Nov 19, 2026 launch, rebuilt in Expo / React Na
 
 ## Code map
 
-- `App.tsx` — all screens (Home, Tracker, Pro, About), tab bar, share-card capture.
+- `App.tsx` — all screens (Home, Launch, Tracker, Pro, About), tab bar, share-card capture.
+- `src/guide.ts` — launch guide data carried over verbatim from v1.1's sourced config (platforms, timeline, what we know, SOURCES) + DST-safe world unlock times.
 - `src/tracker.ts` — pure tracker logic (goals, counts, free limit, persistence, summary, day number).
 - `src/themes.ts` — card/widget palettes, Pro gating, card wording.
 - `src/entitlement.ts` — pure purchase parsing (owns Pro? cancelled? pending? price).
 - `src/iap.ts` — StoreKit via `expo-iap` (OpenIAP): products, purchase, restore, purchase listener, finishTransaction. No third-party purchase service, no key.
 - `src/widgetSync.ts` — writes progress / Pro / style to the App Group `group.com.nickhigh.vicountdown` for the widget (`@bacons/apple-targets` ExtensionStorage).
 - `targets/widget/` — WidgetKit extension (SwiftUI), bundle `com.nickhigh.vicountdown.widget`, generated into the Xcode project at prebuild by `@bacons/apple-targets`.
+- `store/RESEARCH.md` — sourced monetization + 5.2.1 review-risk research behind these choices.
 - `store/IAP-SETUP.md` — product, price reasoning, review screenshot, sandbox checklist.
-- `store/LISTING-2.0.md` — App Store copy, privacy answers, review notes.
+- `store/LISTING-v2.md` — App Store copy, privacy answers, review notes.
 
 ## Test
 
 ```
 npm ci
-npm test              # jest: tracker, themes, entitlement, config + widget/app contract (35 tests)
+npm test              # jest: tracker, themes, entitlement, config + widget/app contract (42 tests)
 npm run typecheck     # tsc --noEmit
-npx expo export -p web --output-dir /tmp/cvi-web && node tests/web-drive.mjs   # headless Chrome drive, 11 steps
+npx expo export -p web --output-dir /tmp/cvi-web && node tests/web-drive.mjs   # headless Chrome drive, 12 steps
 ```
 
 The web drive covers the JS UI. It can't cover StoreKit, the share sheet or widgets — those need the TestFlight build (see `store/IAP-SETUP.md`).
@@ -65,10 +68,10 @@ Credentials: EAS manages the distribution certificate and the provisioning profi
 
 Until then, `--profile production-nogroup` (sets `CVI_APP_GROUP=0`, see `app.config.js`) builds without the App Group: everything works except the widget can't read tracker % / Pro state (Home widget shows the countdown/day count; Lock Screen widgets show the Pro prompt). Use it for TestFlight testing only — ship 2.0 from `production`.
 
-Build number: `ios.buildNumber` in `app.json` (1.1 = build 1, 1.2 Capacitor = build 2 → 2.0 starts at 3). Bump it for every upload.
+Build number: `ios.buildNumber` in `app.json` (1.1 = build 1, 1.2 Capacitor = build 2, 2.0 EAS builds 3 (not uploaded) and 4 → next is 5). Bump it for every upload.
 
 ## Before submitting 2.0 (Nick's call)
 
 1. 1.1 must be approved/released first (one version in review at a time).
 2. Update the Launch Pass IAP's display name/description (and price if agreed) and its review screenshot — see `store/IAP-SETUP.md`.
-3. Paste `store/LISTING-2.0.md` copy, new screenshots, review notes; attach the IAP to the 2.0 version.
+3. Paste `store/LISTING-v2.md` copy, new screenshots, review notes; attach the IAP to the 2.0 version.
