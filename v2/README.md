@@ -57,6 +57,14 @@ eas submit -p ios --profile production --id <BUILD_ID> --non-interactive   # Tes
 
 Credentials: EAS manages the distribution certificate and the provisioning profiles for the app **and** the widget extension (`com.nickhigh.vicountdown.widget`) and the App Group capability. On the first build for this project they must be created with Apple access — either an App Store Connect API key in the environment (`EXPO_ASC_API_KEY_PATH`, `EXPO_ASC_KEY_ID`, `EXPO_ASC_ISSUER_ID`, `EXPO_APPLE_TEAM_ID=Z3S5X9HZXU`, `EXPO_APPLE_TEAM_TYPE`) or one interactive `eas credentials -p ios` run.
 
+**App Group — one manual step.** Credentials and both provisioning profiles now exist on EAS (made with the ASC API key; distribution cert shared with Aether). But the App Group *identifier* `group.com.nickhigh.vicountdown` can't be registered with an API key (Apple only allows it from the Developer portal or an Apple-ID login), so a `production` build fails signing with "profile doesn't support the group.com.nickhigh.vicountdown App Group". Fix once:
+
+1. developer.apple.com → Certificates, IDs & Profiles → Identifiers → App Groups → **+** → `group.com.nickhigh.vicountdown`.
+2. Open the identifiers `com.nickhigh.vicountdown` and `com.nickhigh.vicountdown.widget` → App Groups → Configure → tick the group → Save.
+3. `eas credentials -p ios` → production → regenerate both provisioning profiles (or just delete them there; the next build recreates them), then `eas build -p ios --profile production`.
+
+Until then, `--profile production-nogroup` (sets `CVI_APP_GROUP=0`, see `app.config.js`) builds without the App Group: everything works except the widget can't read tracker % / Pro state (Home widget shows the countdown/day count; Lock Screen widgets show the Pro prompt). Use it for TestFlight testing only — ship 2.0 from `production`.
+
 Build number: `ios.buildNumber` in `app.json` (1.1 = build 1, 1.2 Capacitor = build 2 → 2.0 starts at 3). Bump it for every upload.
 
 ## Before submitting 2.0 (Nick's call)

@@ -10,6 +10,12 @@
       "env": {
         "EAS_BUILD_NO_EXPO_GO_WARNING": "true"
       }
+    },
+    "production-nogroup": {
+      "extends": "production",
+      "env": {
+        "CVI_APP_GROUP": "0"
+      }
     }
   },
   "submit": {

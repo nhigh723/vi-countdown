@@ -7,9 +7,6 @@
     "orientation": "portrait",
     "icon": "./assets/icon.png",
     "userInterfaceStyle": "dark",
-    "splash": {
-      "backgroundColor": "#0b0b14"
-    },
     "ios": {
       "bundleIdentifier": "com.nickhigh.vicountdown",
       "buildNumber": "3",
@@ -33,6 +30,14 @@
     "plugins": [
       "expo-iap",
       "expo-sharing",
+      [
+        "expo-splash-screen",
+        {
+          "backgroundColor": "#0b0b14",
+          "image": "./assets/widget-icon.png",
+          "imageWidth": 120
+        }
+      ],
       [
         "expo-build-properties",
         {

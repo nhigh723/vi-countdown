@@ -11,7 +11,8 @@ module.exports = (config) => ({
     $widgetBackground: '#0b0b14',
   },
   frameworks: ['SwiftUI', 'WidgetKit'],
-  entitlements: {
-    'com.apple.security.application-groups': config.ios.entitlements['com.apple.security.application-groups'],
-  },
+  // Mirrors the app's App Group (omitted when the app is built with CVI_APP_GROUP=0).
+  entitlements: config.ios?.entitlements?.['com.apple.security.application-groups']
+    ? { 'com.apple.security.application-groups': config.ios.entitlements['com.apple.security.application-groups'] }
+    : {},
 });
